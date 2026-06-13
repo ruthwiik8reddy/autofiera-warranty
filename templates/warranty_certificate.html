@@ -1,106 +1,101 @@
 {% extends "base.html" %}
-{% block title %}Warranty {{ w['warranty_number'] or w['id'] }} — Autofiera{% endblock %}
+{% block title %}Warranty {{ w['warranty_number'] or w['id'] }} — X-PPF{% endblock %}
 {% block content %}
 <section class="container page">
 
-  <div class="row between no-print" style="max-width:900px; margin:0 auto var(--space-6)">
-    <a href="{{ url_for('customer_dashboard') if current_role != 'admin' else url_for('admin_warranties') }}" class="muted">← Back</a>
+  <div class="row between no-print" style="max-width:860px;margin:0 auto var(--s6)">
+    <a href="{{ url_for('studio_dashboard') if current_role!='admin' else url_for('admin_warranties') }}" class="link-arrow">‹ Back</a>
+    {% if w['status']=='approved' %}
     <div class="row">
-      {% if w['status'] == 'approved' %}
-        <a href="{{ url_for('claim', warranty_id=w['id']) }}" class="btn btn-ghost btn-sm">File a claim</a>
-        <button onclick="window.print()" class="btn btn-primary btn-sm">Download / Print</button>
-      {% endif %}
+      <a href="{{ url_for('claim', warranty_id=w['id']) }}" class="btn btn-line btn-sm">File a claim</a>
+      <button onclick="window.print()" class="btn btn-primary btn-sm">Download / Print</button>
     </div>
+    {% endif %}
   </div>
 
+  {% set use_studio = (w['brand_choice']=='studio' and w['studio_logo']) %}
   <div class="cert">
-    <div class="cert-header">
-      <h2>Product Warranty Information</h2>
+    <div class="cert-top">
+      <div class="cert-brand">
+        {% if use_studio %}
+          <img src="{{ url_for('uploads', filename=w['studio_logo']) }}" alt="{{ w['studio_name'] }}">
+          <span class="nm">{{ w['studio_name'] }}<small>Authorised X-PPF installer</small></span>
+        {% else %}
+          <img src="{{ url_for('static', filename='img/xppf-logo.svg') }}" alt="X-PPF">
+          <span class="nm">X-Paint Protection Film<small>Product warranty</small></span>
+        {% endif %}
+      </div>
       <span class="cert-num">{{ w['warranty_number'] or 'PENDING' }}</span>
     </div>
 
-    {% if w['status'] == 'pending' %}
-      <div class="cert-status-banner pending">
-        ⏳ Awaiting verification — Autofiera is reviewing the film roll ID and installation photos.
-      </div>
-    {% elif w['status'] == 'rejected' %}
-      <div class="cert-status-banner rejected">
-        ✕ This registration was not approved.{% if w['admin_note'] %} Note: {{ w['admin_note'] }}{% endif %}
-      </div>
+    {% if w['status']=='pending' %}
+      <div class="cert-banner pending">Awaiting verification — the roll ID and photos are under review.</div>
+    {% elif w['status']=='rejected' %}
+      <div class="cert-banner rejected">Not approved.{% if w['admin_note'] %} {{ w['admin_note'] }}{% endif %}</div>
     {% endif %}
 
     <div class="cert-body">
       <div class="info-grid">
-        <div class="info-block">
-          <div class="cert-section-title" style="font-size:var(--text-base)">Customer Information</div>
-          <div class="info-pair-row">
-            <div class="pair"><div class="k">Customer</div><div class="v">{{ w['customer_name'] }}</div></div>
+        <div class="ib">
+          <p class="sec-title">Client information</p>
+          <div class="ipair">
+            <div class="pair"><div class="k">Client</div><div class="v">{{ w['customer_name'] }}</div></div>
             <div class="pair"><div class="k">Phone</div><div class="v">{{ w['customer_phone'] or '—' }}</div></div>
           </div>
-          <div class="info-pair-row">
+          <div class="ipair">
+            <div class="pair"><div class="k">Email</div><div class="v">{{ w['customer_email'] or '—' }}</div></div>
             <div class="pair"><div class="k">Address</div><div class="v">{{ w['customer_address'] or '—' }}</div></div>
-            <div class="pair"><div class="k">E-Mail</div><div class="v">{{ w['customer_email'] or '—' }}</div></div>
           </div>
         </div>
-
-        <div class="info-block">
-          <div class="cert-section-title" style="font-size:var(--text-base)">Vehicle Information</div>
-          <div class="info-pair-row">
+        <div class="ib">
+          <p class="sec-title">Vehicle</p>
+          <div class="ipair">
             <div class="pair"><div class="k">VIN</div><div class="v mono">{{ w['vin'] }}</div></div>
             <div class="pair"><div class="k">Plate</div><div class="v">{{ w['plate'] or '—' }}</div></div>
           </div>
-          <div class="info-pair-row">
-            <div class="pair"><div class="k">Year / Make / Model</div><div class="v">{{ w['vehicle_ymm'] or '—' }}</div></div>
+          <div class="ipair">
+            <div class="pair"><div class="k">Year / make / model</div><div class="v">{{ w['vehicle_ymm'] or '—' }}</div></div>
             <div class="pair"><div class="k">Colour</div><div class="v">{{ w['vehicle_color'] or '—' }}</div></div>
           </div>
-          <div class="info-pair-row">
+          <div class="ipair">
             <div class="pair"><div class="k">Miles</div><div class="v">{{ w['miles'] or '—' }}</div></div>
-            <div class="pair"><div class="k">Film Roll ID</div><div class="v mono">{{ w['roll_id'] or '—' }}</div></div>
+            <div class="pair"><div class="k">Roll ID</div><div class="v mono">{{ w['roll_id'] or '—' }}</div></div>
           </div>
         </div>
       </div>
 
-      <div class="cert-section-title">Warranty Products — {{ (w['product_name'] or 'Paint Protection Film')|upper }}</div>
-      <div class="table-wrap cert-products">
+      <p class="sec-title">Warranty products — {{ (w['product_name'] or 'Paint Protection Film')|upper }}</p>
+      <div class="tw cert-table">
         <table>
           <thead><tr><th>Coverage</th><th>Product</th><th>Warranty Ex Date</th></tr></thead>
           <tbody>
             {% for c in coverage %}
-            <tr>
-              <td>{{ c['part_name'] }}</td>
-              <td class="secondary">{{ c['product_name'] or w['product_name'] or '—' }}</td>
-              <td class="mono">{{ c['expiry_date'] or '—' }}</td>
-            </tr>
+            <tr><td>{{ c['part_name'] }}</td><td class="secondary">{{ c['product_name'] or w['product_name'] or '—' }}</td><td class="mono">{{ c['expiry_date'] or '—' }}</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
-      {% if images and current_role == 'admin' %}
-        <div class="cert-section-title" style="margin-top:var(--space-8)">Installation Photos</div>
-        <div class="thumbs">
-          {% for img in images %}
-            <a href="{{ url_for('uploads', filename=img['filename']) }}" target="_blank">
-              <img src="{{ url_for('uploads', filename=img['filename']) }}" alt="install photo">
-            </a>
-          {% endfor %}
-        </div>
+      {% if images and current_role=='admin' %}
+      <p class="sec-title" style="margin-top:var(--s8)">Installation photos</p>
+      <div class="thumbs">
+        {% for img in images %}<a href="{{ url_for('uploads', filename=img['filename']) }}" target="_blank"><img src="{{ url_for('uploads', filename=img['filename']) }}" alt="install"></a>{% endfor %}
+      </div>
       {% endif %}
 
-      {% if w['status'] == 'approved' %}
-      <div class="cert-qr">
-        <div class="qr-box mono" style="color:#111; font-size:.55rem; text-align:center">QR<br>VERIFY</div>
-        <p>Approved {{ w['approved_at'][:10] if w['approved_at'] else '' }} · Coverage valid through {{ w['expiry_date'] }}.<br>
-           Scan to verify authenticity at autofiera.com/warranty-information</p>
+      {% if w['status']=='approved' %}
+      <div class="cert-verify">
+        <div class="qr">QR<br>VERIFY</div>
+        <p>Approved {{ w['approved_at'][:10] if w['approved_at'] else '' }} · valid through {{ w['expiry_date'] }}.
+          {% if use_studio %}Installed and warranted by {{ w['studio_name'] }}, an authorised X-PPF installer.{% else %}Issued by X-Paint Protection Film.{% endif %}</p>
       </div>
       {% endif %}
     </div>
 
-    <div class="cert-footer">
-      <span>📍 {{ brand.address }}</span>
-      <span>✉ {{ brand.email }}</span>
-      <span>☎ {{ brand.phone }}</span>
-      <span><b style="color:var(--accent)">AUTOFIERA</b></span>
+    <div class="cert-foot">
+      <span>{{ 'Authorised X-PPF installer' if use_studio else brand.name }}</span>
+      <span>{{ brand.email }}</span>
+      <span>{{ brand.phone }}</span>
     </div>
   </div>
 </section>

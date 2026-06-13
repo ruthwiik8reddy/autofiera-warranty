@@ -1,26 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Sign in — Autofiera{% endblock %}
+{% block title %}Sign in — X-PPF{% endblock %}
 {% block content %}
 <section class="container narrow page">
-  <div class="card card-elevated">
-    <p class="eyebrow">Welcome back</p>
-    <h1 style="font-size:var(--text-2xl); margin-bottom:var(--space-6)">Sign in</h1>
+  <div class="card" style="padding:var(--s10)">
+    <div class="center" style="margin-bottom:var(--s8)">
+      <img src="{{ url_for('static', filename='img/xppf-logo.svg') }}" alt="X-PPF" style="width:52px;height:52px">
+      <h1 style="font-size:var(--fs-xl);margin-top:var(--s4)">Sign in</h1>
+    </div>
     <form method="POST">
       <div class="field">
-        <label>Email <span class="req">*</span></label>
-        <input type="email" name="email" required autofocus placeholder="you@example.com">
+        <label>Email</label>
+        <input type="email" name="email" required autofocus>
       </div>
       <div class="field">
-        <label>Password <span class="req">*</span></label>
-        <input type="password" name="password" required placeholder="••••••••">
+        <label>Password</label>
+        <input type="password" name="password" required>
       </div>
-      <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+      <button class="btn btn-primary btn-block btn-lg" type="submit">Sign in</button>
     </form>
-    <hr class="divider">
-    <p class="muted" style="font-size:var(--text-sm)">
-      New here? <a href="{{ url_for('signup') }}">Create an account</a>.
-    </p>
-    <p class="hint">Demo · admin@autofiera.com / autofiera · vivek@example.com / customer</p>
   </div>
 </section>
 {% endblock %}

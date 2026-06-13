@@ -1,65 +1,57 @@
-/* tokens.css — Autofiera design tokens (single source of truth) */
+/* tokens.css — X-PPF design tokens. Apple-clean light system. */
 :root {
-  /* Brand palette */
-  --color-obsidian: #0A0A0B;
-  --color-carbon:   #141416;
-  --color-graphite: #1E1E22;
-  --color-mist:     #2C2C32;
+  /* Surfaces */
+  --bg-page:     #ffffff;
+  --bg-subtle:   #f5f5f7;   /* Apple's signature gray */
+  --bg-elevated: #ffffff;
+  --bg-ink:      #1d1d1f;    /* near-black sections */
+  --bg-ink-soft: #2b2b2f;
 
-  --color-ivory: #F5F3EE;
-  --color-silk:  #C8C4BC;
-  --color-stone: #6B6870;
+  /* Text */
+  --text-primary:   #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-muted:     #86868b;
+  --text-on-ink:    #f5f5f7;
+  --text-on-ink-2:  #a1a1a6;
 
-  --color-gold:        #C9A84C;
-  --color-gold-light:  #E4C67A;
-  --color-gold-dark:   #9A7A2E;
-  --color-gold-subtle: rgba(201, 168, 76, 0.12);
+  /* Lines */
+  --border:        #d2d2d7;
+  --border-subtle: #e8e8ed;
 
-  --color-success: #22C55E;
-  --color-warning: #F59E0B;
-  --color-error:   #EF4444;
-  --color-info:    #2563EB;
+  /* Accent — protective blue */
+  --accent:        #0071e3;
+  --accent-hover:  #0077ed;
+  --accent-press:  #006edb;
+  --accent-soft:   rgba(0,113,227,0.08);
 
-  /* Semantic aliases */
-  --bg-page:        var(--color-obsidian);
-  --bg-surface:     var(--color-carbon);
-  --bg-elevated:    var(--color-graphite);
-  --border-default: var(--color-mist);
-  --text-primary:   var(--color-ivory);
-  --text-secondary: var(--color-silk);
-  --text-muted:     var(--color-stone);
-  --accent:         var(--color-gold);
-  --accent-hover:   var(--color-gold-light);
+  /* Status */
+  --ok:    #1a9e54;  --ok-soft: rgba(26,158,84,0.1);
+  --warn:  #b25e00;  --warn-soft: rgba(178,94,0,0.1);
+  --err:   #d62f2f;  --err-soft: rgba(214,47,47,0.1);
+  --info:  #0071e3;  --info-soft: rgba(0,113,227,0.1);
 
-  /* Typography */
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-body:    'Inter', system-ui, sans-serif;
-  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+  /* Type — single family, many weights (SF-like) */
+  --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+  --mono: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, monospace;
 
-  --text-xs: 0.7rem;  --text-sm: 0.8rem; --text-base: 1rem;
-  --text-md: 1.25rem; --text-lg: 1.563rem; --text-xl: 1.953rem;
-  --text-2xl: 2.441rem; --text-3xl: 3.052rem; --text-4xl: 4.2rem;
+  --fs-xs: .75rem; --fs-sm: .8125rem; --fs-base: .9375rem; --fs-md: 1.0625rem;
+  --fs-lg: 1.375rem; --fs-xl: 1.75rem; --fs-2xl: 2.5rem; --fs-3xl: 3.5rem; --fs-4xl: 4.75rem;
 
-  --weight-light: 300; --weight-regular: 400; --weight-medium: 500;
-  --weight-semibold: 600; --weight-bold: 700;
-
-  --tracking-wide: 0.05em; --tracking-widest: 0.18em;
+  --w-regular: 400; --w-medium: 500; --w-semibold: 600; --w-bold: 700;
+  --track-tight: -0.022em; --track-tighter: -0.03em; --track-wide: 0.06em;
 
   /* Spacing (8px grid) */
-  --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem;
-  --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
-  --space-12: 3rem; --space-16: 4rem; --space-20: 5rem; --space-24: 6rem;
+  --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s5:1.25rem; --s6:1.5rem;
+  --s8:2rem; --s10:2.5rem; --s12:3rem; --s16:4rem; --s20:5rem; --s24:6rem; --s32:8rem;
 
-  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 20px;
-  --radius-full: 9999px;
+  --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:24px; --r-2xl:32px; --r-full:9999px;
 
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.5);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,.6);
-  --shadow-gold: 0 0 20px rgba(201,168,76,.25), 0 4px 16px rgba(201,168,76,.12);
-  --shadow-focus: 0 0 0 2px rgba(201,168,76,.5);
+  --sh-sm: 0 1px 2px rgba(0,0,0,.05);
+  --sh-md: 0 4px 16px rgba(0,0,0,.08);
+  --sh-lg: 0 12px 40px rgba(0,0,0,.10);
+  --sh-xl: 0 24px 64px rgba(0,0,0,.14);
 
-  --duration-fast: 150ms; --duration-base: 250ms; --duration-slow: 400ms;
-  --ease-out: cubic-bezier(0,0,.2,1);
-  --ease-luxury: cubic-bezier(.16,1,.3,1);
+  --t-fast: 150ms; --t-base: 280ms; --t-slow: 600ms;
+  --ease: cubic-bezier(0.16,1,0.3,1);          /* expo out — luxury/Apple */
+  --ease-quart: cubic-bezier(0.25,1,0.5,1);
 }

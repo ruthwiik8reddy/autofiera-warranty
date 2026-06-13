@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{{ code }} — Autofiera{% endblock %}
+{% block title %}{{ code }} — X-PPF{% endblock %}
 {% block content %}
 <section class="container narrow page center">
-  <h1 style="font-size:var(--text-4xl); color:var(--accent)">{{ code }}</h1>
-  <p class="secondary" style="margin:var(--space-4) 0">{{ msg }}</p>
+  <h1 style="font-size:var(--fs-4xl)">{{ code }}</h1>
+  <p class="secondary" style="margin:var(--s4) 0">{{ msg }}</p>
   <a href="{{ url_for('index') }}" class="btn btn-ghost btn-sm">Back to home</a>
 </section>
 {% endblock %}

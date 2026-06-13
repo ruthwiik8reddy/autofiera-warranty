@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — X-PPF{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head row between">
+    <div><p class="eyebrow">{{ user['studio_name'] or current_user['name'] }}</p><h1>Dashboard</h1></div>
+    <div class="row">
+      <a href="{{ url_for('warranty_register') }}" class="btn btn-primary btn-sm">Register warranty</a>
+      <a href="{{ url_for('products') }}" class="btn btn-ghost btn-sm">Order product</a>
+    </div>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:var(--s12)">
+    <div class="kpi"><div class="num">{{ warranties|length }}</div><div class="label">Warranties</div></div>
+    <div class="kpi"><div class="num">{{ warranties|selectattr('status','equalto','approved')|list|length }}</div><div class="label">Active</div></div>
+    <div class="kpi"><div class="num">{{ orders|length }}</div><div class="label">Orders</div></div>
+    <div class="kpi"><div class="num">{{ claims|length }}</div><div class="label">Claims</div></div>
+  </div>
+
+  <h2 style="margin-bottom:var(--s4)">Warranties</h2>
+  {% if warranties %}
+  <div class="tw" style="margin-bottom:var(--s12)">
+    <table><thead><tr><th>No.</th><th>Vehicle / client</th><th>VIN</th><th>Brand</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for w in warranties %}
+      <tr>
+        <td class="mono">{{ w['warranty_number'] or '—' }}</td>
+        <td>{{ w['vehicle_ymm'] or '—' }}<br><span class="muted">{{ w['customer_name'] }}</span></td>
+        <td class="mono">{{ w['vin'] }}</td>
+        <td>{{ 'My studio' if w['brand_choice']=='studio' else 'X-PPF' }}</td>
+        <td><span class="badge b-{{ w['status'] }}">{{ w['status'] }}</span></td>
+        <td><a href="{{ url_for('warranty_view', warranty_id=w['id']) }}" class="link-arrow">View ›</a></td>
+      </tr>
+      {% endfor %}
+    </tbody></table>
+  </div>
+  {% else %}
+  <div class="card center" style="margin-bottom:var(--s12)"><p class="muted">No warranties yet.</p>
+    <a href="{{ url_for('warranty_register') }}" class="btn btn-primary btn-sm" style="margin-top:var(--s4)">Register your first</a></div>
+  {% endif %}
+
+  <div class="grid g2">
+    <div><h2 style="margin-bottom:var(--s4)">Recent orders</h2>
+      {% if orders %}<div class="stack">{% for o in orders[:4] %}
+        <div class="card row between"><div><b>{{ o['product_name'] }}</b><br><span class="muted">{{ o['vehicle_ymm'] or '—' }}</span></div>
+        <span class="badge b-{{ o['status'] }}">{{ o['status'].replace('_',' ') }}</span></div>{% endfor %}</div>
+      {% else %}<p class="muted">No orders yet.</p>{% endif %}</div>
+    <div><h2 style="margin-bottom:var(--s4)">Recent claims</h2>
+      {% if claims %}<div class="stack">{% for c in claims[:4] %}
+        <div class="card row between"><div><b>{{ c['affected_part'] or 'Claim' }}</b><br><span class="muted mono">{{ c['warranty_number'] }}</span></div>
+        <span class="badge b-{{ c['status'] }}">{{ c['status'].replace('_',' ') }}</span></div>{% endfor %}</div>
+      {% else %}<p class="muted">No claims.</p>{% endif %}</div>
+  </div>
+</section>
+{% endblock %}

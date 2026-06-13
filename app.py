@@ -1,22 +1,15 @@
 """
-app.py — Autofiera Warranty & Orders platform.
+app.py — X-Paint Protection Film (X-PPF) platform.
 
 Run:
     pip install -r requirements.txt
-    python app.py
-    # open http://127.0.0.1:5055
+    python app.py            # http://127.0.0.1:5055
 
 Seeded logins (change after first login):
-    admin     -> admin@autofiera.com / autofiera
-    customer  -> vivek@example.com   / customer
+    admin  -> admin@xppf.com    / xppf-admin
+    studio -> studio@example.com / studio
 
-Features
---------
-  Public      : landing, login, signup
-  Customer    : browse + order products, register warranties, view certificates,
-                file warranty claims, track own orders/warranties/claims
-  Admin (you) : dashboard, verify & approve/reject warranty registrations,
-                receive & manage work orders, manage claims, manage products
+Accounts are created by the admin only — there is no public signup.
 """
 
 import os
@@ -32,15 +25,15 @@ from werkzeug.utils import secure_filename
 
 import db
 
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "uploads")
-ALLOWED_EXT = {"png", "jpg", "jpeg", "webp", "gif", "heic"}
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
+ALLOWED_EXT = {"png", "jpg", "jpeg", "webp", "gif", "heic", "svg"}
 MAX_CONTENT_MB = 25
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me-in-production")
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_MB * 1024 * 1024
 app.config["UPLOAD_DIR"] = UPLOAD_DIR
-
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
@@ -54,11 +47,12 @@ def inject_globals():
         "current_role": session.get("role"),
         "year": datetime.utcnow().year,
         "brand": {
-            "name": "Autofiera Detailing Studio",
-            "tagline": "Premium Paint Protection",
-            "address": "Hyderabad, Telangana, India",
-            "email": "warranty@autofiera.com",
-            "phone": "+91 00000 00000",
+            "name": "X-Paint Protection Film",
+            "short": "X-PPF",
+            "tagline": "Protection, certified.",
+            "email": "warranty@xppf.com",
+            "phone": "+1 000 000 0000",
+            "address": "X-Paint Protection Film",
         },
     }
 
@@ -72,7 +66,6 @@ def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if "user_id" not in session:
-            flash("Please sign in to continue.", "info")
             return redirect(url_for("login", next=request.path))
         return f(*args, **kwargs)
     return wrapper
@@ -93,8 +86,17 @@ def _allowed(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXT
 
 
-def _save_uploads(file_field):
-    """Save all files for a multipart field; return list of stored filenames."""
+def _save_one(file_field):
+    f = request.files.get(file_field)
+    if f and f.filename and _allowed(f.filename):
+        ext = f.filename.rsplit(".", 1)[1].lower()
+        fn = f"{uuid.uuid4().hex}.{ext}"
+        f.save(os.path.join(app.config["UPLOAD_DIR"], secure_filename(fn)))
+        return fn
+    return None
+
+
+def _save_many(file_field):
     saved = []
     for f in request.files.getlist(file_field):
         if f and f.filename and _allowed(f.filename):
@@ -106,7 +108,7 @@ def _save_uploads(file_field):
 
 
 # --------------------------------------------------------------------------- #
-# Auth
+# Public + auth
 # --------------------------------------------------------------------------- #
 @app.route("/")
 def index():
@@ -126,31 +128,9 @@ def login():
             dest = request.args.get("next")
             if user["role"] == "admin":
                 return redirect(dest or url_for("admin_dashboard"))
-            return redirect(dest or url_for("customer_dashboard"))
-        flash("Invalid email or password.", "error")
+            return redirect(dest or url_for("studio_dashboard"))
+        flash("That email and password don't match.", "error")
     return render_template("login.html")
-
-
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        phone = request.form.get("phone", "").strip()
-        password = request.form.get("password", "")
-        if not (name and email and password):
-            flash("Name, email and password are required.", "error")
-        elif db.get_user_by_email(email):
-            flash("An account with that email already exists.", "error")
-        else:
-            uid = db.create_user(name, email, phone, password, role="customer")
-            session.clear()
-            session["user_id"] = uid
-            session["role"] = "customer"
-            session["name"] = name
-            flash("Welcome to Autofiera.", "success")
-            return redirect(url_for("customer_dashboard"))
-    return render_template("signup.html")
 
 
 @app.route("/logout")
@@ -160,7 +140,7 @@ def logout():
 
 
 # --------------------------------------------------------------------------- #
-# Products + ordering (customer)
+# Products + ordering
 # --------------------------------------------------------------------------- #
 @app.route("/products")
 def products():
@@ -175,15 +155,12 @@ def order(product_id):
         abort(404)
     if request.method == "POST":
         db.create_order(
-            user_id=session["user_id"],
-            product_id=product["id"],
-            product_name=product["name"],
+            user_id=session["user_id"], product_id=product["id"], product_name=product["name"],
             vehicle_ymm=request.form.get("vehicle_ymm", "").strip(),
             vehicle_color=request.form.get("vehicle_color", "").strip(),
-            vin=request.form.get("vin", "").strip(),
-            notes=request.form.get("notes", "").strip(),
+            vin=request.form.get("vin", "").strip(), notes=request.form.get("notes", "").strip(),
         )
-        flash("Order placed — Autofiera will reach out to schedule your install.", "success")
+        flash("Order placed. X-PPF will reach out to confirm fulfilment.", "success")
         return redirect(url_for("my_orders"))
     return render_template("order.html", product=product)
 
@@ -195,30 +172,29 @@ def my_orders():
 
 
 # --------------------------------------------------------------------------- #
-# Warranty registration (customer / installer)
+# Warranty registration
 # --------------------------------------------------------------------------- #
 @app.route("/warranty/register", methods=["GET", "POST"])
 @login_required
 def warranty_register():
+    user = _current_user()
     if request.method == "POST":
         parts = request.form.getlist("parts")
+        brand_choice = request.form.get("brand_choice", "xppf")
+        err = None
         if not parts:
-            flash("Select at least one part covered by the PPF.", "error")
-            return render_template("warranty_register.html",
-                                   parts=db.CAR_PARTS, products=db.list_products(),
-                                   form=request.form)
-        if not request.form.get("vin"):
-            flash("VIN is required.", "error")
-            return render_template("warranty_register.html",
-                                   parts=db.CAR_PARTS, products=db.list_products(),
-                                   form=request.form)
+            err = "Select at least one part covered by the film."
+        elif not request.form.get("vin"):
+            err = "VIN is required."
+        elif brand_choice == "studio" and not (user["studio_name"] and user["studio_logo"]):
+            err = "To brand under your own studio, add your studio name and logo in your profile first."
+        if err:
+            flash(err, "error")
+            return render_template("warranty_register.html", groups=db.CAR_PART_GROUPS,
+                                   products=db.list_products(), form=request.form, user=user)
 
-        product = None
-        pid = request.form.get("product_id")
-        if pid:
-            product = db.get_product(int(pid))
-
-        images = _save_uploads("photos")
+        product = db.get_product(int(request.form["product_id"])) if request.form.get("product_id") else None
+        images = _save_many("photos")
         data = {
             "user_id": session["user_id"],
             "customer_name": request.form.get("customer_name", "").strip(),
@@ -234,13 +210,14 @@ def warranty_register():
             "product_name": product["name"] if product else request.form.get("product_name", "").strip(),
             "warranty_years": product["warranty_years"] if product else 8,
             "roll_id": request.form.get("roll_id", "").strip(),
+            "brand_choice": brand_choice,
         }
         wid = db.create_warranty(data, parts, images)
-        flash("Warranty submitted for verification. You'll be notified once Autofiera approves it.", "success")
+        flash("Warranty submitted for verification.", "success")
         return redirect(url_for("warranty_view", warranty_id=wid))
 
-    return render_template("warranty_register.html",
-                           parts=db.CAR_PARTS, products=db.list_products(), form={})
+    return render_template("warranty_register.html", groups=db.CAR_PART_GROUPS,
+                           products=db.list_products(), form={}, user=user)
 
 
 @app.route("/my/warranties")
@@ -256,14 +233,13 @@ def warranty_view(warranty_id):
     w, coverage, images = db.get_warranty(warranty_id)
     if not w:
         abort(404)
-    # access control: owner or admin
     if session.get("role") != "admin" and w["user_id"] != session["user_id"]:
         abort(403)
     return render_template("warranty_certificate.html", w=w, coverage=coverage, images=images)
 
 
 # --------------------------------------------------------------------------- #
-# Warranty claims (customer)
+# Claims
 # --------------------------------------------------------------------------- #
 @app.route("/claim/<int:warranty_id>", methods=["GET", "POST"])
 @login_required
@@ -276,23 +252,15 @@ def claim(warranty_id):
     if w["status"] != "approved":
         flash("Claims can only be filed against an approved warranty.", "error")
         return redirect(url_for("warranty_view", warranty_id=warranty_id))
-
     if request.method == "POST":
         desc = request.form.get("description", "").strip()
         if not desc:
-            flash("Please describe the issue you're claiming for.", "error")
+            flash("Describe the issue you're claiming for.", "error")
         else:
-            images = _save_uploads("photos")
-            db.create_claim(
-                warranty_id=warranty_id,
-                user_id=session["user_id"],
-                affected_part=request.form.get("affected_part", "").strip(),
-                description=desc,
-                image_filenames=images,
-            )
-            flash("Claim submitted. Autofiera will review it shortly.", "success")
+            db.create_claim(warranty_id, session["user_id"],
+                            request.form.get("affected_part", "").strip(), desc, _save_many("photos"))
+            flash("Claim submitted. X-PPF will review it shortly.", "success")
             return redirect(url_for("my_claims"))
-
     return render_template("warranty_claim.html", w=w, coverage=coverage)
 
 
@@ -305,20 +273,32 @@ def my_claims():
 
 
 # --------------------------------------------------------------------------- #
-# Customer dashboard
+# Studio profile (logo + studio name)
 # --------------------------------------------------------------------------- #
+@app.route("/studio/profile", methods=["GET", "POST"])
+@login_required
+def studio_profile():
+    user = _current_user()
+    if request.method == "POST":
+        logo = _save_one("logo")
+        db.update_studio_profile(session["user_id"],
+                                 request.form.get("studio_name", "").strip(), logo)
+        flash("Studio profile updated.", "success")
+        return redirect(url_for("studio_profile"))
+    return render_template("studio_profile.html", user=user)
+
+
 @app.route("/dashboard")
 @login_required
-def customer_dashboard():
+def studio_dashboard():
     if session.get("role") == "admin":
         return redirect(url_for("admin_dashboard"))
     uid = session["user_id"]
-    return render_template(
-        "customer_dashboard.html",
-        warranties=db.list_warranties(user_id=uid),
-        orders=db.list_orders(user_id=uid),
-        claims=db.list_claims(user_id=uid),
-    )
+    return render_template("studio_dashboard.html",
+                           warranties=db.list_warranties(user_id=uid),
+                           orders=db.list_orders(user_id=uid),
+                           claims=db.list_claims(user_id=uid),
+                           user=_current_user())
 
 
 # --------------------------------------------------------------------------- #
@@ -327,30 +307,46 @@ def customer_dashboard():
 @app.route("/admin")
 @admin_required
 def admin_dashboard():
-    return render_template(
-        "admin_dashboard.html",
-        counts=db.admin_counts(),
-        pending=db.list_warranties(status="pending"),
-        recent_orders=db.list_orders()[:6],
-    )
+    return render_template("admin_dashboard.html", counts=db.admin_counts(),
+                           pending=db.list_warranties(status="pending"),
+                           recent_orders=db.list_orders()[:6])
+
+
+@app.route("/admin/users", methods=["GET", "POST"])
+@admin_required
+def admin_users():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        if db.get_user_by_email(email):
+            flash("An account with that email already exists.", "error")
+        else:
+            role = "admin" if request.form.get("role") == "admin" else "studio"
+            logo = _save_one("logo")
+            db.create_user(
+                name=request.form.get("name", "").strip(), email=email,
+                phone=request.form.get("phone", "").strip(),
+                password=request.form.get("password", ""), role=role,
+                studio_name=request.form.get("studio_name", "").strip() or None,
+                studio_logo=logo,
+            )
+            flash(f"Account created for {email} ({role}).", "success")
+        return redirect(url_for("admin_users"))
+    return render_template("admin_users.html", users=db.list_users())
 
 
 @app.route("/admin/warranties")
 @admin_required
 def admin_warranties():
-    status = request.args.get("status")  # None = all
-    return render_template(
-        "admin_warranties.html",
-        warranties=db.list_warranties(status=status),
-        active_status=status,
-    )
+    status = request.args.get("status")
+    return render_template("admin_warranties.html",
+                           warranties=db.list_warranties(status=status), active_status=status)
 
 
 @app.route("/admin/warranty/<int:warranty_id>/approve", methods=["POST"])
 @admin_required
 def admin_approve(warranty_id):
     db.approve_warranty(warranty_id, admin_note=request.form.get("admin_note", "").strip())
-    flash(f"Warranty #{warranty_id} approved and certificate issued.", "success")
+    flash(f"Warranty #{warranty_id} approved — certificate issued.", "success")
     return redirect(request.referrer or url_for("admin_warranties"))
 
 
@@ -420,7 +416,7 @@ def admin_product_toggle(product_id):
 
 
 # --------------------------------------------------------------------------- #
-# Uploaded file serving (explicit route so it's easy to lock down later)
+# Uploaded files
 # --------------------------------------------------------------------------- #
 @app.route("/uploads/<path:filename>")
 @login_required
@@ -435,7 +431,7 @@ def forbidden(e):
 
 @app.errorhandler(404)
 def not_found(e):
-    return render_template("error.html", code=404, msg="Page not found."), 404
+    return render_template("error.html", code=404, msg="We couldn't find that page."), 404
 
 
 if __name__ == "__main__":

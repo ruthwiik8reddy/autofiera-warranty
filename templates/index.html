@@ -1,35 +1,39 @@
 {% extends "base.html" %}
-{% block title %}Autofiera — Premium Paint Protection{% endblock %}
+{% block title %}X-Paint Protection Film{% endblock %}
 {% block content %}
 <section class="hero container">
-  <p class="eyebrow">Autofiera Detailing Studio · Hyderabad</p>
-  <h1>Protection that comes<br>with a promise.</h1>
-  <p>Self-healing paint protection film and ceramic coatings, backed by a verified
-     digital warranty. Order an install, register your coverage, and file claims — all in one place.</p>
-  <div class="row" style="justify-content:center">
-    <a href="{{ url_for('products') }}" class="btn btn-primary">Explore Products</a>
-    {% if not current_user %}
-      <a href="{{ url_for('signup') }}" class="btn btn-ghost">Create Account</a>
-    {% endif %}
+  <p class="eyebrow reveal">X-Paint Protection Film</p>
+  <h1 class="reveal">A finish that defends itself.</h1>
+  <p class="sub reveal">Self-healing film and ceramic coatings, issued with a verified digital
+    warranty your clients can trust. Register coverage, co-brand the certificate, and handle
+    claims — start to finish.</p>
+  <div class="row reveal" style="justify-content:center">
+    <a href="{{ url_for('products') }}" class="btn btn-primary btn-lg">Explore products</a>
+    <a href="{{ url_for('login') }}" class="link-arrow">Sign in ›</a>
   </div>
 </section>
 
-<section class="container page" style="padding-top:0">
+<section class="container" style="padding-bottom:var(--s16)">
   <div class="page-head row between">
-    <div><p class="eyebrow">Coverage</p><h2>Our Protection Range</h2></div>
-    <a href="{{ url_for('products') }}">View all →</a>
+    <h2 class="reveal">The protection range</h2>
+    <a href="{{ url_for('products') }}" class="link-arrow reveal">All products ›</a>
   </div>
-  <div class="grid grid-3">
+  <div class="grid g3">
     {% for p in products[:3] %}
-    <div class="card card-hover product">
+    <div class="card lift product reveal">
       <span class="cat">{{ p['category'] }}</span>
       <h3>{{ p['name'] }}</h3>
       <p class="desc">{{ p['tagline'] }}</p>
-      <div class="price">₹{{ '{:,.0f}'.format(p['price']) }} <small>onwards</small></div>
-      <div class="warranty-tag">{{ p['warranty_years'] }}-year warranty</div>
-      <a href="{{ url_for('order', product_id=p['id']) }}" class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)">Order</a>
+      <div class="price">${{ '{:,.0f}'.format(p['price']) }} <small>from</small></div>
+      <div class="wtag">{{ p['warranty_years'] }}-year warranty</div>
     </div>
     {% endfor %}
+  </div>
+
+  <div class="hero-ink reveal">
+    <h2>Your brand, or ours.</h2>
+    <p>Issue each warranty under your own studio name and logo, or under X-PPF — you choose per job.</p>
+    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Get started</a>
   </div>
 </section>
 {% endblock %}

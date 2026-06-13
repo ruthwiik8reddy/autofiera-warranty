@@ -1,111 +1,105 @@
 {% extends "base.html" %}
-{% block title %}Register Warranty — Autofiera{% endblock %}
+{% block title %}Register Warranty — X-PPF{% endblock %}
 {% block content %}
-<section class="container page">
-  <div class="page-head narrow" style="margin-inline:auto">
-    <p class="eyebrow">Warranty Registration</p>
-    <h1>Register a PPF Warranty</h1>
-    <p class="secondary">Enter the customer and vehicle details, select the parts covered, record the
-      film roll ID, and upload installation photos. Autofiera will verify the roll ID and approve the
-      warranty — the certificate is issued on approval.</p>
+<section class="container narrow page">
+  <div class="page-head">
+    <p class="eyebrow">Warranty registration</p>
+    <h1>Register a warranty</h1>
+    <p class="secondary">Enter the client and vehicle details, choose how to brand the certificate,
+      pick the covered parts, record the film roll ID, and attach install photos. X-PPF verifies the
+      roll ID before the certificate is issued.</p>
   </div>
 
-  <form method="POST" enctype="multipart/form-data" class="narrow" style="margin-inline:auto">
+  <form method="POST" enctype="multipart/form-data">
 
-    <div class="card" style="margin-bottom:var(--space-6)">
-      <h3 class="cert-section-title">Customer Information</h3>
-      <div class="field">
-        <label>Customer name <span class="req">*</span></label>
-        <input type="text" name="customer_name" required value="{{ form.get('customer_name','') }}" placeholder="Vivek Reddy">
+    <div class="card" style="margin-bottom:var(--s5)">
+      <p class="sec-title">Client information</p>
+      <div class="field"><label>Client name <span class="req">*</span></label>
+        <input type="text" name="customer_name" required value="{{ form.get('customer_name','') }}"></div>
+      <div class="frow">
+        <div class="field"><label>Phone</label><input type="text" name="customer_phone" value="{{ form.get('customer_phone','') }}"></div>
+        <div class="field"><label>Email</label><input type="email" name="customer_email" value="{{ form.get('customer_email','') }}"></div>
       </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Phone</label>
-          <input type="text" name="customer_phone" value="{{ form.get('customer_phone','') }}" placeholder="+91 ...">
-        </div>
-        <div class="field">
-          <label>E-mail</label>
-          <input type="email" name="customer_email" value="{{ form.get('customer_email','') }}" placeholder="customer@email.com">
-        </div>
-      </div>
-      <div class="field">
-        <label>Address</label>
-        <input type="text" name="customer_address" value="{{ form.get('customer_address','') }}" placeholder="Hyderabad, Telangana">
-      </div>
+      <div class="field"><label>Address</label><input type="text" name="customer_address" value="{{ form.get('customer_address','') }}"></div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-6)">
-      <h3 class="cert-section-title">Vehicle Information</h3>
-      <div class="field-row">
-        <div class="field">
-          <label>VIN <span class="req">*</span></label>
-          <input type="text" name="vin" required value="{{ form.get('vin','') }}" placeholder="WBA67FX09TY466124" style="text-transform:uppercase">
-        </div>
-        <div class="field">
-          <label>Plate</label>
-          <input type="text" name="plate" value="{{ form.get('plate','') }}" placeholder="TG ...">
-        </div>
+    <div class="card" style="margin-bottom:var(--s5)">
+      <p class="sec-title">Vehicle</p>
+      <div class="frow">
+        <div class="field"><label>VIN <span class="req">*</span></label>
+          <input type="text" name="vin" required value="{{ form.get('vin','') }}" style="text-transform:uppercase"></div>
+        <div class="field"><label>Plate</label><input type="text" name="plate" value="{{ form.get('plate','') }}"></div>
       </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Year / Make / Model</label>
-          <input type="text" name="vehicle_ymm" value="{{ form.get('vehicle_ymm','') }}" placeholder="2026 BMW iX1">
-        </div>
-        <div class="field">
-          <label>Colour</label>
-          <input type="text" name="vehicle_color" value="{{ form.get('vehicle_color','') }}" placeholder="Carbon Black Metallic">
-        </div>
+      <div class="frow">
+        <div class="field"><label>Year / make / model</label><input type="text" name="vehicle_ymm" value="{{ form.get('vehicle_ymm','') }}" placeholder="2026 BMW iX1"></div>
+        <div class="field"><label>Colour</label><input type="text" name="vehicle_color" value="{{ form.get('vehicle_color','') }}"></div>
       </div>
-      <div class="field">
-        <label>Miles / Odometer</label>
-        <input type="text" name="miles" value="{{ form.get('miles','') }}" placeholder="e.g. 1,240">
-      </div>
+      <div class="field"><label>Miles / odometer</label><input type="text" name="miles" value="{{ form.get('miles','') }}"></div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-6)">
-      <h3 class="cert-section-title">Product & Film Roll</h3>
-      <div class="field-row">
-        <div class="field">
-          <label>Product</label>
+    <div class="card" style="margin-bottom:var(--s5)">
+      <p class="sec-title">Product &amp; film roll</p>
+      <div class="frow">
+        <div class="field"><label>Product</label>
           <select name="product_id">
-            <option value="">— Select product —</option>
-            {% for p in products %}
-              <option value="{{ p['id'] }}" {% if form.get('product_id')==p['id']|string %}selected{% endif %}>
-                {{ p['name'] }} ({{ p['warranty_years'] }}yr)
-              </option>
-            {% endfor %}
+            <option value="">Select product</option>
+            {% for p in products %}<option value="{{ p['id'] }}" {% if form.get('product_id')==p['id']|string %}selected{% endif %}>{{ p['name'] }} ({{ p['warranty_years'] }}yr)</option>{% endfor %}
           </select>
         </div>
-        <div class="field">
-          <label>Film Roll ID <span class="req">*</span></label>
-          <input type="text" name="roll_id" required value="{{ form.get('roll_id','') }}" placeholder="e.g. PRX-LITE8-23A4471" class="mono">
-          <p class="hint">Admin verifies this against stock before approval.</p>
+        <div class="field"><label>Film roll ID <span class="req">*</span></label>
+          <input type="text" name="roll_id" required value="{{ form.get('roll_id','') }}" class="mono" placeholder="XP-LITE8-23A4471">
+          <p class="hint">Verified against stock before approval.</p>
         </div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-6)">
-      <h3 class="cert-section-title">Coverage — parts protected with PPF <span class="req">*</span></h3>
-      <div class="parts-grid">
-        {% for part in parts %}
-        <label class="part-check">
-          <input type="checkbox" name="parts" value="{{ part }}">
-          <span>{{ part }}</span>
+    <div class="card" style="margin-bottom:var(--s5)">
+      <p class="sec-title">Certificate branding</p>
+      <div class="brandopts">
+        <label class="brandopt">
+          <input type="radio" name="brand_choice" value="studio" {% if form.get('brand_choice')=='studio' %}checked{% endif %}>
+          <h4>My studio{% if user['studio_name'] %} · {{ user['studio_name'] }}{% endif %}</h4>
+          <p>Sell under your own name — your logo appears on the certificate.</p>
         </label>
+        <label class="brandopt">
+          <input type="radio" name="brand_choice" value="xppf" {% if form.get('brand_choice','xppf')=='xppf' %}checked{% endif %}>
+          <h4>X-PPF</h4>
+          <p>Sell under X-Paint Protection Film branding and logo.</p>
+        </label>
+      </div>
+      {% if not (user['studio_name'] and user['studio_logo']) %}
+      <p class="hint">To use your own branding, add your studio name and logo on
+        <a href="{{ url_for('studio_profile') }}">your studio page</a> first.</p>
+      {% endif %}
+    </div>
+
+    <div class="card" style="margin-bottom:var(--s5)">
+      <p class="sec-title">Coverage — parts protected <span class="req">*</span></p>
+      <div class="coverage">
+        <label class="cov-master" for="fullbody">
+          <div><h3>Full Body</h3><p>Wrap the entire vehicle — selects every panel below.</p></div>
+          <span class="switch"><input type="checkbox" id="fullbody"><span class="track"></span></span>
+        </label>
+        {% for group, parts in groups.items() %}
+        <div class="cov-group">
+          <h4>{{ group }}</h4>
+          <div class="chips">
+            {% for part in parts %}
+            <label class="chip"><input type="checkbox" name="parts" value="{{ part }}"><span class="dot"></span>{{ part }}</label>
+            {% endfor %}
+          </div>
+        </div>
         {% endfor %}
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-6)">
-      <h3 class="cert-section-title">Installation Photos</h3>
-      <div class="field">
-        <label>Upload photos of the installed film</label>
-        <input type="file" name="photos" accept="image/*" multiple>
-        <p class="hint">JPG / PNG / WEBP / HEIC, up to 25&nbsp;MB total. Multiple files allowed.</p>
-      </div>
+    <div class="card" style="margin-bottom:var(--s6)">
+      <p class="sec-title">Installation photos</p>
+      <div class="field"><input type="file" name="photos" accept="image/*" multiple>
+        <p class="hint">JPG / PNG / WEBP / HEIC, up to 25 MB total.</p></div>
     </div>
 
-    <button class="btn btn-primary btn-block" type="submit">Submit for verification</button>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">Submit for verification</button>
   </form>
 </section>
 {% endblock %}

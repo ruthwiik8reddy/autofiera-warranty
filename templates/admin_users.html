@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Accounts — X-PPF Admin{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head"><p class="eyebrow">Admin</p><h1>Accounts</h1>
+    <p class="secondary">Create accounts for studios or other admins. There is no public signup — every account is created here.</p></div>
+
+  <div class="grid g2">
+    <div>
+      <h2 style="margin-bottom:var(--s4)">Create an account</h2>
+      <div class="card">
+        <form method="POST" enctype="multipart/form-data">
+          <div class="field"><label>Full name <span class="req">*</span></label><input type="text" name="name" required></div>
+          <div class="frow">
+            <div class="field"><label>Email <span class="req">*</span></label><input type="email" name="email" required></div>
+            <div class="field"><label>Phone</label><input type="text" name="phone"></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Role <span class="req">*</span></label>
+              <select name="role"><option value="studio">Studio (user)</option><option value="admin">Admin</option></select></div>
+            <div class="field"><label>Temporary password <span class="req">*</span></label><input type="text" name="password" required></div>
+          </div>
+          <div class="field"><label>Studio name</label><input type="text" name="studio_name" placeholder="For studio accounts"></div>
+          <div class="field"><label>Studio logo</label><input type="file" name="logo" accept="image/*">
+            <p class="hint">Optional — studios can also upload this themselves later.</p></div>
+          <button class="btn btn-primary btn-block btn-lg" type="submit">Create account</button>
+        </form>
+      </div>
+    </div>
+
+    <div>
+      <h2 style="margin-bottom:var(--s4)">All accounts</h2>
+      <div class="stack">
+        {% for u in users %}
+        <div class="card row between">
+          <div class="row" style="gap:var(--s3)">
+            {% if u['studio_logo'] %}<img class="logo-preview" style="width:44px;height:44px" src="{{ url_for('uploads', filename=u['studio_logo']) }}" alt="">{% endif %}
+            <div><b>{{ u['name'] }}</b>{% if u['studio_name'] %} <span class="muted">· {{ u['studio_name'] }}</span>{% endif %}<br>
+              <span class="muted">{{ u['email'] }}</span></div>
+          </div>
+          <span class="badge {{ 'b-approved' if u['role']=='admin' else 'b-received' }}">{{ u['role'] }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

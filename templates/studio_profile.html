@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}My Studio — X-PPF{% endblock %}
+{% block content %}
+<section class="container narrow page">
+  <div class="page-head"><p class="eyebrow">Studio</p><h1>Studio profile</h1>
+    <p class="secondary">Set your studio name and logo. These appear on warranties you choose to issue under your own brand.</p></div>
+  <div class="card">
+    <form method="POST" enctype="multipart/form-data">
+      <div class="field"><label>Studio name</label>
+        <input type="text" name="studio_name" value="{{ user['studio_name'] or '' }}" placeholder="Apex Auto Studio"></div>
+      <div class="field"><label>Studio logo</label>
+        {% if user['studio_logo'] %}<div style="margin-bottom:var(--s3)"><img class="logo-preview" src="{{ url_for('uploads', filename=user['studio_logo']) }}" alt="current logo"></div>{% endif %}
+        <input type="file" name="logo" accept="image/*">
+        <p class="hint">PNG or SVG with transparent background works best. Up to 25 MB.</p></div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit">Save profile</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -1,50 +1,29 @@
 {% extends "base.html" %}
-{% block title %}Catalog — Admin{% endblock %}
+{% block title %}Catalog — X-PPF Admin{% endblock %}
 {% block content %}
 <section class="container page">
-  <div class="page-head"><p class="eyebrow">Admin</p><h1>Product Catalog</h1></div>
-
-  <div class="grid grid-2">
-    <div>
-      <h2 style="margin-bottom:var(--space-4)">Add a product</h2>
-      <div class="card card-elevated">
-        <form method="POST">
-          <div class="field"><label>Name <span class="req">*</span></label>
-            <input type="text" name="name" required placeholder="Autofiera Protex Lite 8"></div>
-          <div class="field-row">
-            <div class="field"><label>Category</label>
-              <select name="category"><option>PPF</option><option>Ceramic Coating</option></select></div>
-            <div class="field"><label>Warranty (years)</label>
-              <input type="number" name="warranty_years" value="8"></div>
-          </div>
-          <div class="field"><label>Tagline</label>
-            <input type="text" name="tagline" placeholder="8-Year Paint Protection Film"></div>
-          <div class="field"><label>Description</label>
-            <textarea name="description" placeholder="Short description..."></textarea></div>
-          <div class="field"><label>Price (₹)</label>
-            <input type="number" name="price" step="any" placeholder="145000"></div>
-          <button class="btn btn-primary btn-block" type="submit">Add product</button>
-        </form>
-      </div>
-    </div>
-
-    <div>
-      <h2 style="margin-bottom:var(--space-4)">All products</h2>
-      <div class="stack">
-        {% for p in products %}
-        <div class="card row between">
-          <div>
-            <b>{{ p['name'] }}</b> <span class="muted">· {{ p['category'] }}</span><br>
-            <span class="muted">₹{{ '{:,.0f}'.format(p['price']) }} · {{ p['warranty_years'] }}yr</span>
-            {% if not p['active'] %}<span class="badge badge-cancelled" style="margin-left:var(--space-2)">hidden</span>{% endif %}
-          </div>
-          <form method="POST" action="{{ url_for('admin_product_toggle', product_id=p['id']) }}">
-            <button class="btn btn-ghost btn-sm" type="submit">{{ 'Hide' if p['active'] else 'Show' }}</button>
-          </form>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
+  <div class="page-head"><p class="eyebrow">Admin</p><h1>Product catalog</h1></div>
+  <div class="grid g2">
+    <div><h2 style="margin-bottom:var(--s4)">Add a product</h2>
+      <div class="card"><form method="POST">
+        <div class="field"><label>Name <span class="req">*</span></label><input type="text" name="name" required></div>
+        <div class="frow">
+          <div class="field"><label>Category</label><select name="category"><option>PPF</option><option>Ceramic Coating</option></select></div>
+          <div class="field"><label>Warranty (years)</label><input type="number" name="warranty_years" value="8"></div></div>
+        <div class="field"><label>Tagline</label><input type="text" name="tagline"></div>
+        <div class="field"><label>Description</label><textarea name="description"></textarea></div>
+        <div class="field"><label>Price ($)</label><input type="number" name="price" step="any"></div>
+        <button class="btn btn-primary btn-block btn-lg" type="submit">Add product</button>
+      </form></div></div>
+    <div><h2 style="margin-bottom:var(--s4)">All products</h2><div class="stack">
+      {% for p in products %}
+      <div class="card row between">
+        <div><b>{{ p['name'] }}</b> <span class="muted">· {{ p['category'] }}</span><br>
+          <span class="muted">${{ '{:,.0f}'.format(p['price']) }} · {{ p['warranty_years'] }}yr</span>
+          {% if not p['active'] %}<span class="badge b-cancelled" style="margin-left:var(--s2)">hidden</span>{% endif %}</div>
+        <form method="POST" action="{{ url_for('admin_product_toggle', product_id=p['id']) }}">
+          <button class="btn btn-ghost btn-sm" type="submit">{{ 'Hide' if p['active'] else 'Show' }}</button></form>
+      </div>{% endfor %}</div></div>
   </div>
 </section>
 {% endblock %}

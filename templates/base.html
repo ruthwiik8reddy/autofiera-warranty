@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Autofiera Warranty{% endblock %}</title>
+  <title>{% block title %}X-Paint Protection Film{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="{{ url_for('static', filename='img/xppf-logo.svg') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
@@ -14,27 +14,28 @@
   <nav class="nav no-print">
     <div class="container nav-inner">
       <a href="{{ url_for('index') }}" class="brand">
-        <span class="logo">AUTO<b>FIERA</b><small>Paint Protection</small></span>
+        <img src="{{ url_for('static', filename='img/xppf-logo.svg') }}" alt="X-PPF">
+        <span class="bt"><b>X</b>-PPF</span>
       </a>
       <div class="nav-links">
         <a href="{{ url_for('products') }}">Products</a>
         {% if current_user %}
           {% if current_role == 'admin' %}
-            <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('admin_dashboard') }}">Overview</a>
+            <a href="{{ url_for('admin_users') }}">Accounts</a>
             <a href="{{ url_for('admin_warranties') }}">Warranties</a>
             <a href="{{ url_for('admin_orders') }}">Work Orders</a>
             <a href="{{ url_for('admin_claims') }}">Claims</a>
             <a href="{{ url_for('admin_products') }}">Catalog</a>
           {% else %}
-            <a href="{{ url_for('customer_dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('warranty_register') }}">Register Warranty</a>
-            <a href="{{ url_for('my_warranties') }}">My Warranties</a>
-            <a href="{{ url_for('my_orders') }}">My Orders</a>
+            <a href="{{ url_for('studio_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('warranty_register') }}">Register</a>
+            <a href="{{ url_for('my_warranties') }}">Warranties</a>
+            <a href="{{ url_for('studio_profile') }}">Studio</a>
           {% endif %}
-          <a href="{{ url_for('logout') }}" class="btn btn-ghost btn-sm">Sign out</a>
+          <a href="{{ url_for('logout') }}">Sign out</a>
         {% else %}
-          <a href="{{ url_for('login') }}">Sign in</a>
-          <a href="{{ url_for('signup') }}" class="btn btn-primary btn-sm">Create account</a>
+          <a href="{{ url_for('login') }}" class="cta">Sign in</a>
         {% endif %}
       </div>
     </div>
@@ -43,13 +44,9 @@
   <main>
     <div class="container">
       {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div style="margin-top: var(--space-6)">
-          {% for cat, msg in messages %}
-            <div class="flash flash-{{ cat }}">{{ msg }}</div>
-          {% endfor %}
-          </div>
-        {% endif %}
+        {% if messages %}<div style="margin-top:var(--s6)">
+          {% for cat,msg in messages %}<div class="flash flash-{{ cat }}">{{ msg }}</div>{% endfor %}
+        </div>{% endif %}
       {% endwith %}
     </div>
     {% block content %}{% endblock %}
@@ -57,17 +54,51 @@
 
   <footer class="site no-print">
     <div class="container row between">
-      <span>© {{ year }} {{ brand.name }} · {{ brand.address }}</span>
+      <span>© {{ year }} {{ brand.name }}</span>
       <span>{{ brand.email }} · {{ brand.phone }}</span>
     </div>
   </footer>
 
   <script>
-    // toggle visual state on part checkboxes
-    document.querySelectorAll('.part-check input').forEach(cb => {
-      const sync = () => cb.closest('.part-check').classList.toggle('checked', cb.checked);
-      cb.addEventListener('change', sync); sync();
-    });
+    // Scroll reveal
+    (function(){
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var els = document.querySelectorAll('.reveal');
+      if (reduce || !('IntersectionObserver' in window)) { els.forEach(function(e){e.classList.add('in')}); return; }
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(en,i){
+          if(en.isIntersecting){ setTimeout(function(){en.target.classList.add('in')}, (i%6)*70); io.unobserve(en.target); }
+        });
+      }, {threshold:0.12, rootMargin:'0px 0px -40px 0px'});
+      els.forEach(function(e){io.observe(e)});
+    })();
+
+    // Coverage picker: chips + Full Body master
+    (function(){
+      var master = document.getElementById('fullbody');
+      var chips = Array.prototype.slice.call(document.querySelectorAll('.chip input'));
+      if(!chips.length) return;
+      function syncChip(cb){ cb.closest('.chip').classList.toggle('on', cb.checked); }
+      function syncMaster(){ if(master){ master.checked = chips.every(function(c){return c.checked}); } }
+      chips.forEach(function(cb){
+        syncChip(cb);
+        cb.addEventListener('change', function(){ syncChip(cb); syncMaster(); });
+      });
+      if(master){
+        master.addEventListener('change', function(){
+          chips.forEach(function(cb){ cb.checked = master.checked; syncChip(cb); });
+        });
+        syncMaster();
+      }
+    })();
+
+    // Brand choice highlight
+    (function(){
+      var opts = document.querySelectorAll('.brandopt input');
+      function sync(){ document.querySelectorAll('.brandopt').forEach(function(o){
+        o.classList.toggle('on', o.querySelector('input').checked); }); }
+      opts.forEach(function(i){ i.addEventListener('change', sync); }); sync();
+    })();
   </script>
 </body>
 </html>

@@ -1,38 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Work Orders — Admin{% endblock %}
+{% block title %}Work Orders — X-PPF Admin{% endblock %}
 {% block content %}
 <section class="container page">
-  <div class="page-head"><p class="eyebrow">Admin · Incoming</p><h1>Work Orders</h1></div>
-
+  <div class="page-head"><p class="eyebrow">Admin · Incoming</p><h1>Work orders</h1></div>
   {% if orders %}
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Order</th><th>Customer</th><th>Vehicle</th><th>Notes</th><th>Status</th><th>Update</th></tr></thead>
-      <tbody>
-        {% for o in orders %}
-        <tr>
-          <td><b>{{ o['product_name'] }}</b><br><span class="muted">{{ o['created_at'][:10] }}</span></td>
-          <td>{{ o['customer_name'] }}<br><span class="muted">{{ o['customer_phone'] or '' }}<br>{{ o['customer_email'] }}</span></td>
-          <td>{{ o['vehicle_ymm'] or '—' }}<br><span class="muted">{{ o['vehicle_color'] or '' }} {{ o['vin'] or '' }}</span></td>
-          <td class="secondary">{{ o['notes'] or '—' }}</td>
-          <td><span class="badge badge-{{ o['status'] }}">{{ o['status'].replace('_',' ') }}</span></td>
-          <td>
-            <form method="POST" action="{{ url_for('admin_order_status', order_id=o['id']) }}" class="row" style="gap:var(--space-2)">
-              <select name="status" style="padding:var(--space-2); font-size:var(--text-sm)">
-                {% for s in ['received','scheduled','in_progress','completed','cancelled'] %}
-                  <option value="{{ s }}" {% if o['status']==s %}selected{% endif %}>{{ s.replace('_',' ') }}</option>
-                {% endfor %}
-              </select>
-              <button class="btn btn-ghost btn-sm" type="submit">Save</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div class="card center"><p class="muted">No work orders received yet.</p></div>
-  {% endif %}
+  <div class="tw"><table><thead><tr><th>Order</th><th>Studio</th><th>Vehicle</th><th>Notes</th><th>Status</th><th>Update</th></tr></thead>
+    <tbody>{% for o in orders %}
+      <tr><td><b>{{ o['product_name'] }}</b><br><span class="muted">{{ o['created_at'][:10] }}</span></td>
+      <td>{{ o['studio_name'] or o['customer_name'] }}<br><span class="muted">{{ o['customer_phone'] or '' }}<br>{{ o['customer_email'] }}</span></td>
+      <td>{{ o['vehicle_ymm'] or '—' }}<br><span class="muted">{{ o['vehicle_color'] or '' }} {{ o['vin'] or '' }}</span></td>
+      <td class="secondary">{{ o['notes'] or '—' }}</td>
+      <td><span class="badge b-{{ o['status'] }}">{{ o['status'].replace('_',' ') }}</span></td>
+      <td><form method="POST" action="{{ url_for('admin_order_status', order_id=o['id']) }}" class="row" style="gap:var(--s2)">
+        <select name="status" style="padding:var(--s2);font-size:var(--fs-sm)">
+          {% for s in ['received','scheduled','in_progress','completed','cancelled'] %}<option value="{{ s }}" {% if o['status']==s %}selected{% endif %}>{{ s.replace('_',' ') }}</option>{% endfor %}
+        </select><button class="btn btn-ghost btn-sm" type="submit">Save</button></form></td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<div class="card center"><p class="muted">No work orders yet.</p></div>{% endif %}
 </section>
 {% endblock %}
