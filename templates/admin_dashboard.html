@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Admin — Autofiera{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head"><p class="eyebrow">Admin · {{ current_user['name'] }}</p><h1>Studio Dashboard</h1></div>
+
+  <div class="grid grid-4" style="margin-bottom:var(--space-10)">
+    <a href="{{ url_for('admin_warranties', status='pending') }}" class="kpi card-hover" style="display:block">
+      <div class="num">{{ counts['pending_warranties'] }}</div><div class="label">Pending Warranties</div></a>
+    <a href="{{ url_for('admin_warranties', status='approved') }}" class="kpi card-hover" style="display:block">
+      <div class="num">{{ counts['approved_warranties'] }}</div><div class="label">Approved</div></a>
+    <a href="{{ url_for('admin_orders') }}" class="kpi card-hover" style="display:block">
+      <div class="num">{{ counts['open_orders'] }}</div><div class="label">Open Work Orders</div></a>
+    <a href="{{ url_for('admin_claims') }}" class="kpi card-hover" style="display:block">
+      <div class="num">{{ counts['open_claims'] }}</div><div class="label">Open Claims</div></a>
+  </div>
+
+  <div class="page-head row between">
+    <h2>Pending Warranty Verifications</h2>
+    <a href="{{ url_for('admin_warranties') }}">All warranties →</a>
+  </div>
+  {% if pending %}
+  <div class="table-wrap" style="margin-bottom:var(--space-10)">
+    <table>
+      <thead><tr><th>Customer / Vehicle</th><th>VIN</th><th>Roll ID</th><th>Submitted</th><th></th></tr></thead>
+      <tbody>
+        {% for w in pending %}
+        <tr>
+          <td><b>{{ w['customer_name'] }}</b><br><span class="muted">{{ w['vehicle_ymm'] or '—' }}</span></td>
+          <td class="mono">{{ w['vin'] }}</td>
+          <td class="mono">{{ w['roll_id'] or '—' }}</td>
+          <td class="muted">{{ w['created_at'][:10] }}</td>
+          <td><a href="{{ url_for('warranty_view', warranty_id=w['id']) }}" class="btn btn-ghost btn-sm">Review</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card center" style="margin-bottom:var(--space-10)"><p class="muted">No pending verifications. 🎉</p></div>
+  {% endif %}
+
+  <div class="page-head row between"><h2>Recent Work Orders</h2><a href="{{ url_for('admin_orders') }}">All orders →</a></div>
+  {% if recent_orders %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Product</th><th>Customer</th><th>Vehicle</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for o in recent_orders %}
+        <tr>
+          <td><b>{{ o['product_name'] }}</b></td>
+          <td>{{ o['customer_name'] }}<br><span class="muted">{{ o['customer_phone'] or o['customer_email'] }}</span></td>
+          <td>{{ o['vehicle_ymm'] or '—' }}</td>
+          <td><span class="badge badge-{{ o['status'] }}">{{ o['status'].replace('_',' ') }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="card center"><p class="muted">No orders received yet.</p></div>{% endif %}
+</section>
+{% endblock %}

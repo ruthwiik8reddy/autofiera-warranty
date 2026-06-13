@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}My Warranties — Autofiera{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head row between">
+    <div><p class="eyebrow">Coverage</p><h1>My Warranties</h1></div>
+    <a href="{{ url_for('warranty_register') }}" class="btn btn-primary btn-sm">Register Warranty</a>
+  </div>
+  {% if warranties %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>No.</th><th>Vehicle</th><th>VIN</th><th>Roll ID</th><th>Expiry</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for w in warranties %}
+        <tr>
+          <td class="mono">{{ w['warranty_number'] or '—' }}</td>
+          <td>{{ w['vehicle_ymm'] or '—' }}<br><span class="muted">{{ w['customer_name'] }}</span></td>
+          <td class="mono">{{ w['vin'] }}</td>
+          <td class="mono">{{ w['roll_id'] or '—' }}</td>
+          <td class="mono">{{ w['expiry_date'] or '—' }}</td>
+          <td><span class="badge badge-{{ w['status'] }}">{{ w['status'] }}</span></td>
+          <td>
+            <a href="{{ url_for('warranty_view', warranty_id=w['id']) }}" class="btn btn-ghost btn-sm">View</a>
+            {% if w['status']=='approved' %}<a href="{{ url_for('claim', warranty_id=w['id']) }}" class="btn btn-ghost btn-sm">Claim</a>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card center"><p class="muted">No warranties registered yet.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

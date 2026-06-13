@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Order {{ product['name'] }} — Autofiera{% endblock %}
+{% block content %}
+<section class="container narrow page">
+  <div class="page-head">
+    <p class="eyebrow">{{ product['category'] }}</p>
+    <h1>Order · {{ product['name'] }}</h1>
+    <p class="secondary">{{ product['tagline'] }} · {{ product['warranty_years'] }}-year warranty ·
+      ₹{{ '{:,.0f}'.format(product['price']) }} onwards</p>
+  </div>
+  <div class="card card-elevated">
+    <form method="POST">
+      <div class="field">
+        <label>Vehicle (Year / Make / Model) <span class="req">*</span></label>
+        <input type="text" name="vehicle_ymm" required placeholder="2026 BMW iX1">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Colour</label>
+          <input type="text" name="vehicle_color" placeholder="Carbon Black Metallic">
+        </div>
+        <div class="field">
+          <label>VIN</label>
+          <input type="text" name="vin" placeholder="WBA67FX09TY466124" style="text-transform:uppercase">
+        </div>
+      </div>
+      <div class="field">
+        <label>Notes for the studio</label>
+        <textarea name="notes" placeholder="Anything we should know — preferred dates, full vs partial wrap, etc."></textarea>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Place order</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Autofiera — Premium Paint Protection{% endblock %}
+{% block content %}
+<section class="hero container">
+  <p class="eyebrow">Autofiera Detailing Studio · Hyderabad</p>
+  <h1>Protection that comes<br>with a promise.</h1>
+  <p>Self-healing paint protection film and ceramic coatings, backed by a verified
+     digital warranty. Order an install, register your coverage, and file claims — all in one place.</p>
+  <div class="row" style="justify-content:center">
+    <a href="{{ url_for('products') }}" class="btn btn-primary">Explore Products</a>
+    {% if not current_user %}
+      <a href="{{ url_for('signup') }}" class="btn btn-ghost">Create Account</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="container page" style="padding-top:0">
+  <div class="page-head row between">
+    <div><p class="eyebrow">Coverage</p><h2>Our Protection Range</h2></div>
+    <a href="{{ url_for('products') }}">View all →</a>
+  </div>
+  <div class="grid grid-3">
+    {% for p in products[:3] %}
+    <div class="card card-hover product">
+      <span class="cat">{{ p['category'] }}</span>
+      <h3>{{ p['name'] }}</h3>
+      <p class="desc">{{ p['tagline'] }}</p>
+      <div class="price">₹{{ '{:,.0f}'.format(p['price']) }} <small>onwards</small></div>
+      <div class="warranty-tag">{{ p['warranty_years'] }}-year warranty</div>
+      <a href="{{ url_for('order', product_id=p['id']) }}" class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)">Order</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

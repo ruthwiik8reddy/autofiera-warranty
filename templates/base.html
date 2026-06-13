@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Autofiera Warranty{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <nav class="nav no-print">
+    <div class="container nav-inner">
+      <a href="{{ url_for('index') }}" class="brand">
+        <span class="logo">AUTO<b>FIERA</b><small>Paint Protection</small></span>
+      </a>
+      <div class="nav-links">
+        <a href="{{ url_for('products') }}">Products</a>
+        {% if current_user %}
+          {% if current_role == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('admin_warranties') }}">Warranties</a>
+            <a href="{{ url_for('admin_orders') }}">Work Orders</a>
+            <a href="{{ url_for('admin_claims') }}">Claims</a>
+            <a href="{{ url_for('admin_products') }}">Catalog</a>
+          {% else %}
+            <a href="{{ url_for('customer_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('warranty_register') }}">Register Warranty</a>
+            <a href="{{ url_for('my_warranties') }}">My Warranties</a>
+            <a href="{{ url_for('my_orders') }}">My Orders</a>
+          {% endif %}
+          <a href="{{ url_for('logout') }}" class="btn btn-ghost btn-sm">Sign out</a>
+        {% else %}
+          <a href="{{ url_for('login') }}">Sign in</a>
+          <a href="{{ url_for('signup') }}" class="btn btn-primary btn-sm">Create account</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div style="margin-top: var(--space-6)">
+          {% for cat, msg in messages %}
+            <div class="flash flash-{{ cat }}">{{ msg }}</div>
+          {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site no-print">
+    <div class="container row between">
+      <span>© {{ year }} {{ brand.name }} · {{ brand.address }}</span>
+      <span>{{ brand.email }} · {{ brand.phone }}</span>
+    </div>
+  </footer>
+
+  <script>
+    // toggle visual state on part checkboxes
+    document.querySelectorAll('.part-check input').forEach(cb => {
+      const sync = () => cb.closest('.part-check').classList.toggle('checked', cb.checked);
+      cb.addEventListener('change', sync); sync();
+    });
+  </script>
+</body>
+</html>

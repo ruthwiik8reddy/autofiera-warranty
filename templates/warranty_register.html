@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Register Warranty — Autofiera{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head narrow" style="margin-inline:auto">
+    <p class="eyebrow">Warranty Registration</p>
+    <h1>Register a PPF Warranty</h1>
+    <p class="secondary">Enter the customer and vehicle details, select the parts covered, record the
+      film roll ID, and upload installation photos. Autofiera will verify the roll ID and approve the
+      warranty — the certificate is issued on approval.</p>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" class="narrow" style="margin-inline:auto">
+
+    <div class="card" style="margin-bottom:var(--space-6)">
+      <h3 class="cert-section-title">Customer Information</h3>
+      <div class="field">
+        <label>Customer name <span class="req">*</span></label>
+        <input type="text" name="customer_name" required value="{{ form.get('customer_name','') }}" placeholder="Vivek Reddy">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Phone</label>
+          <input type="text" name="customer_phone" value="{{ form.get('customer_phone','') }}" placeholder="+91 ...">
+        </div>
+        <div class="field">
+          <label>E-mail</label>
+          <input type="email" name="customer_email" value="{{ form.get('customer_email','') }}" placeholder="customer@email.com">
+        </div>
+      </div>
+      <div class="field">
+        <label>Address</label>
+        <input type="text" name="customer_address" value="{{ form.get('customer_address','') }}" placeholder="Hyderabad, Telangana">
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-6)">
+      <h3 class="cert-section-title">Vehicle Information</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>VIN <span class="req">*</span></label>
+          <input type="text" name="vin" required value="{{ form.get('vin','') }}" placeholder="WBA67FX09TY466124" style="text-transform:uppercase">
+        </div>
+        <div class="field">
+          <label>Plate</label>
+          <input type="text" name="plate" value="{{ form.get('plate','') }}" placeholder="TG ...">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Year / Make / Model</label>
+          <input type="text" name="vehicle_ymm" value="{{ form.get('vehicle_ymm','') }}" placeholder="2026 BMW iX1">
+        </div>
+        <div class="field">
+          <label>Colour</label>
+          <input type="text" name="vehicle_color" value="{{ form.get('vehicle_color','') }}" placeholder="Carbon Black Metallic">
+        </div>
+      </div>
+      <div class="field">
+        <label>Miles / Odometer</label>
+        <input type="text" name="miles" value="{{ form.get('miles','') }}" placeholder="e.g. 1,240">
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-6)">
+      <h3 class="cert-section-title">Product & Film Roll</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>Product</label>
+          <select name="product_id">
+            <option value="">— Select product —</option>
+            {% for p in products %}
+              <option value="{{ p['id'] }}" {% if form.get('product_id')==p['id']|string %}selected{% endif %}>
+                {{ p['name'] }} ({{ p['warranty_years'] }}yr)
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Film Roll ID <span class="req">*</span></label>
+          <input type="text" name="roll_id" required value="{{ form.get('roll_id','') }}" placeholder="e.g. PRX-LITE8-23A4471" class="mono">
+          <p class="hint">Admin verifies this against stock before approval.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-6)">
+      <h3 class="cert-section-title">Coverage — parts protected with PPF <span class="req">*</span></h3>
+      <div class="parts-grid">
+        {% for part in parts %}
+        <label class="part-check">
+          <input type="checkbox" name="parts" value="{{ part }}">
+          <span>{{ part }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-6)">
+      <h3 class="cert-section-title">Installation Photos</h3>
+      <div class="field">
+        <label>Upload photos of the installed film</label>
+        <input type="file" name="photos" accept="image/*" multiple>
+        <p class="hint">JPG / PNG / WEBP / HEIC, up to 25&nbsp;MB total. Multiple files allowed.</p>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block" type="submit">Submit for verification</button>
+  </form>
+</section>
+{% endblock %}

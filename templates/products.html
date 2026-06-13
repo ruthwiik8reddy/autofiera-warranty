@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Products — Autofiera{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head">
+    <p class="eyebrow">Catalog</p>
+    <h1>Paint Protection & Coatings</h1>
+    <p class="secondary">Choose a package and place an order. Our team will reach out to schedule your install.</p>
+  </div>
+  <div class="grid grid-3">
+    {% for p in products %}
+    <div class="card card-hover product">
+      <span class="cat">{{ p['category'] }}</span>
+      <h3>{{ p['name'] }}</h3>
+      <p class="desc">{{ p['description'] }}</p>
+      <div class="price">₹{{ '{:,.0f}'.format(p['price']) }} <small>onwards</small></div>
+      <div class="warranty-tag">{{ p['warranty_years'] }}-year warranty</div>
+      <a href="{{ url_for('order', product_id=p['id']) }}" class="btn btn-primary btn-sm btn-block" style="margin-top:var(--space-5)">Order this</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}File a Claim — Autofiera{% endblock %}
+{% block content %}
+<section class="container narrow page">
+  <div class="page-head">
+    <p class="eyebrow">Warranty Claim</p>
+    <h1>File a Claim</h1>
+    <p class="secondary">Warranty <b class="mono">{{ w['warranty_number'] }}</b> ·
+      {{ w['vehicle_ymm'] }} · VIN <span class="mono">{{ w['vin'] }}</span></p>
+  </div>
+
+  <div class="card card-elevated">
+    <form method="POST" enctype="multipart/form-data">
+      <div class="field">
+        <label>Affected part</label>
+        <select name="affected_part">
+          <option value="">— Select the covered part —</option>
+          {% for c in coverage %}
+            <option value="{{ c['part_name'] }}">{{ c['part_name'] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Describe the issue <span class="req">*</span></label>
+        <textarea name="description" required placeholder="e.g. Yellowing on the hood film, lifting edge near the left mirror, etc."></textarea>
+      </div>
+      <div class="field">
+        <label>Upload photos of the issue <span class="req">*</span></label>
+        <input type="file" name="photos" accept="image/*" multiple>
+        <p class="hint">Clear, well-lit photos help us assess the claim faster. Multiple files allowed.</p>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Submit claim</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

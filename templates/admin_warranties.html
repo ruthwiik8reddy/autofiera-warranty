@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Warranties — Admin{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head"><p class="eyebrow">Admin</p><h1>Warranty Verifications</h1></div>
+
+  <div class="row" style="margin-bottom:var(--space-6)">
+    <a href="{{ url_for('admin_warranties') }}" class="btn btn-sm {{ 'btn-primary' if not active_status else 'btn-ghost' }}">All</a>
+    <a href="{{ url_for('admin_warranties', status='pending') }}" class="btn btn-sm {{ 'btn-primary' if active_status=='pending' else 'btn-ghost' }}">Pending</a>
+    <a href="{{ url_for('admin_warranties', status='approved') }}" class="btn btn-sm {{ 'btn-primary' if active_status=='approved' else 'btn-ghost' }}">Approved</a>
+    <a href="{{ url_for('admin_warranties', status='rejected') }}" class="btn btn-sm {{ 'btn-primary' if active_status=='rejected' else 'btn-ghost' }}">Rejected</a>
+  </div>
+
+  {% if warranties %}
+  <div class="stack">
+    {% for w in warranties %}
+    <div class="card">
+      <div class="row between">
+        <div>
+          <span class="badge badge-{{ w['status'] }}">{{ w['status'] }}</span>
+          <b style="margin-left:var(--space-2)">{{ w['customer_name'] }}</b>
+          <span class="muted"> · {{ w['vehicle_ymm'] or '—' }}</span>
+        </div>
+        <span class="mono muted">{{ w['warranty_number'] or '#' ~ w['id'] }}</span>
+      </div>
+      <div class="row" style="margin-top:var(--space-3); gap:var(--space-8)">
+        <div><div class="k muted" style="font-size:var(--text-xs)">VIN</div><div class="mono">{{ w['vin'] }}</div></div>
+        <div><div class="k muted" style="font-size:var(--text-xs)">Roll ID</div><div class="mono">{{ w['roll_id'] or '—' }}</div></div>
+        <div><div class="k muted" style="font-size:var(--text-xs)">Product</div><div>{{ w['product_name'] or '—' }}</div></div>
+        <div><div class="k muted" style="font-size:var(--text-xs)">Submitted</div><div>{{ w['created_at'][:10] }}</div></div>
+      </div>
+
+      <div class="row between" style="margin-top:var(--space-5)">
+        <a href="{{ url_for('warranty_view', warranty_id=w['id']) }}" class="btn btn-ghost btn-sm">View certificate & photos</a>
+        {% if w['status'] == 'pending' %}
+        <div class="row">
+          <form method="POST" action="{{ url_for('admin_reject', warranty_id=w['id']) }}" class="row" style="gap:var(--space-2)">
+            <input type="text" name="admin_note" placeholder="Reason (optional)" style="width:200px; padding:var(--space-2) var(--space-3); font-size:var(--text-sm)">
+            <button class="btn btn-danger btn-sm" type="submit">Reject</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin_approve', warranty_id=w['id']) }}">
+            <button class="btn btn-success btn-sm" type="submit">Verify & Approve</button>
+          </form>
+        </div>
+        {% elif w['status'] == 'approved' %}
+          <span class="muted" style="font-size:var(--text-sm)">Valid through <b class="mono">{{ w['expiry_date'] }}</b></span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card center"><p class="muted">Nothing here.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

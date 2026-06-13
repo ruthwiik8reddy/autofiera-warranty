@@ -1,0 +1,21 @@
+# runtime data — never commit
+autofiera.db
+*.sqlite
+*.sqlite3
+
+# uploaded user photos
+static/uploads/*
+!static/uploads/.gitkeep
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# secrets / env
+.env
+.env.*
+
+# os
+.DS_Store

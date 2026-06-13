@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Claims — Admin{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head"><p class="eyebrow">Admin</p><h1>Warranty Claims</h1></div>
+
+  {% if claims %}
+  <div class="stack">
+    {% for c in claims %}
+    <div class="card">
+      <div class="row between">
+        <div>
+          <span class="badge badge-{{ c['status'] }}">{{ c['status'].replace('_',' ') }}</span>
+          <b style="margin-left:var(--space-2)">{{ c['affected_part'] or 'General claim' }}</b>
+          <span class="muted mono"> · {{ c['warranty_number'] }}</span>
+        </div>
+        <span class="muted" style="font-size:var(--text-sm)">{{ c['created_at'][:10] }}</span>
+      </div>
+      <p class="secondary" style="margin-top:var(--space-3)">{{ c['description'] }}</p>
+      <p class="muted" style="font-size:var(--text-sm); margin-top:var(--space-2)">
+        {{ c['claimant_name'] }} · {{ c['claimant_email'] }} · {{ c['vehicle_ymm'] }} · VIN <span class="mono">{{ c['vin'] }}</span>
+      </p>
+      {% if images[c['id']] %}
+        <div class="thumbs">
+          {% for img in images[c['id']] %}
+            <a href="{{ url_for('uploads', filename=img['filename']) }}" target="_blank">
+              <img src="{{ url_for('uploads', filename=img['filename']) }}" alt="claim photo"></a>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <form method="POST" action="{{ url_for('admin_claim_status', claim_id=c['id']) }}" class="row" style="margin-top:var(--space-5); gap:var(--space-2)">
+        <select name="status" style="padding:var(--space-2); font-size:var(--text-sm)">
+          {% for s in ['submitted','under_review','approved','rejected','resolved'] %}
+            <option value="{{ s }}" {% if c['status']==s %}selected{% endif %}>{{ s.replace('_',' ') }}</option>
+          {% endfor %}
+        </select>
+        <input type="text" name="admin_note" placeholder="Note to customer (optional)" value="{{ c['admin_note'] or '' }}"
+               style="flex:1; min-width:220px; padding:var(--space-2) var(--space-3); font-size:var(--text-sm)">
+        <button class="btn btn-primary btn-sm" type="submit">Update</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card center"><p class="muted">No claims filed yet.</p></div>
+  {% endif %}
+</section>
+{% endblock %}
