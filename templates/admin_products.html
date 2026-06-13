@@ -12,14 +12,14 @@
           <div class="field"><label>Warranty (years)</label><input type="number" name="warranty_years" value="8"></div></div>
         <div class="field"><label>Tagline</label><input type="text" name="tagline"></div>
         <div class="field"><label>Description</label><textarea name="description"></textarea></div>
-        <div class="field"><label>Price ($)</label><input type="number" name="price" step="any"></div>
+        <div class="field"><label>Price (₹)</label><input type="number" name="price" step="any"></div>
         <button class="btn btn-primary btn-block btn-lg" type="submit">Add product</button>
       </form></div></div>
     <div><h2 style="margin-bottom:var(--s4)">All products</h2><div class="stack">
       {% for p in products %}
       <div class="card row between">
         <div><b>{{ p['name'] }}</b> <span class="muted">· {{ p['category'] }}</span><br>
-          <span class="muted">${{ '{:,.0f}'.format(p['price']) }} · {{ p['warranty_years'] }}yr</span>
+          <span class="muted">{{ p['price']|inr }} · {{ p['warranty_years'] }}yr</span>
           {% if not p['active'] %}<span class="badge b-cancelled" style="margin-left:var(--s2)">hidden</span>{% endif %}</div>
         <form method="POST" action="{{ url_for('admin_product_toggle', product_id=p['id']) }}">
           <button class="btn btn-ghost btn-sm" type="submit">{{ 'Hide' if p['active'] else 'Show' }}</button></form>

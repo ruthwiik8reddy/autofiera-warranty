@@ -5,15 +5,73 @@
   <p class="eyebrow reveal">X-Paint Protection Film</p>
   <h1 class="reveal">A finish that defends itself.</h1>
   <p class="sub reveal">Self-healing film and ceramic coatings, issued with a verified digital
-    warranty your clients can trust. Register coverage, co-brand the certificate, and handle
-    claims — start to finish.</p>
+    warranty your clients can trust.</p>
   <div class="row reveal" style="justify-content:center">
     <a href="{{ url_for('products') }}" class="btn btn-primary btn-lg">Explore products</a>
-    <a href="{{ url_for('login') }}" class="link-arrow">Sign in ›</a>
+    <a href="{{ url_for('about') }}" class="link-arrow">How it works ›</a>
+  </div>
+  <p class="install-hint reveal">Scroll to watch the film go on ↓</p>
+</section>
+
+<!-- Scroll-scrubbed PPF installation -->
+<section class="install" id="install">
+  <div class="install-stage">
+    <div class="install-inner">
+      <p class="install-eyebrow">PPF installation</p>
+      <h2 class="install-step" id="installStep">Bare paint</h2>
+
+      <div class="car-wrap" id="carWrap">
+        <!-- Bare / dull paint -->
+        <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M70 250 C70 220 92 211 126 209 L214 206 C242 150 280 124 348 120 L486 120
+                   C560 122 602 150 632 200 L724 212 C752 217 766 230 766 252 L766 258
+                   C766 272 754 280 736 280 L104 280 C84 280 70 268 70 254 Z"
+                fill="#cfd2d7"/>
+          <path d="M306 150 L470 148 C512 150 536 168 556 198 L322 200 C310 178 306 164 306 150 Z"
+                fill="#b3b8c0"/>
+          <circle cx="236" cy="282" r="46" fill="#26262a"/><circle cx="236" cy="282" r="20" fill="#3c3c42"/>
+          <circle cx="610" cy="282" r="46" fill="#26262a"/><circle cx="610" cy="282" r="20" fill="#3c3c42"/>
+        </svg>
+
+        <!-- Protected / glossy (revealed left→right by scroll) -->
+        <div class="car-protected" id="carProtected">
+          <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="gloss-body" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#eef3fb"/><stop offset="0.42" stop-color="#c4cfde"/>
+                <stop offset="1" stop-color="#9aa7ba"/>
+              </linearGradient>
+              <linearGradient id="gloss-glass" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#dfe9f6"/><stop offset="1" stop-color="#8fa6c0"/>
+              </linearGradient>
+            </defs>
+            <path d="M70 250 C70 220 92 211 126 209 L214 206 C242 150 280 124 348 120 L486 120
+                     C560 122 602 150 632 200 L724 212 C752 217 766 230 766 252 L766 258
+                     C766 272 754 280 736 280 L104 280 C84 280 70 268 70 254 Z"
+                  fill="url(#gloss-body)"/>
+            <!-- specular highlight along the shoulder -->
+            <path d="M150 214 C260 196 520 196 690 220 C520 206 270 206 150 224 Z"
+                  fill="#ffffff" opacity="0.75"/>
+            <path d="M306 150 L470 148 C512 150 536 168 556 198 L322 200 C310 178 306 164 306 150 Z"
+                  fill="url(#gloss-glass)"/>
+            <path d="M320 158 L452 156 C470 158 484 168 496 182 L330 184 C322 174 320 166 320 158 Z"
+                  fill="#ffffff" opacity="0.35"/>
+            <circle cx="236" cy="282" r="46" fill="#1d1d1f"/><circle cx="236" cy="282" r="20" fill="#52525a"/>
+            <circle cx="610" cy="282" r="46" fill="#1d1d1f"/><circle cx="610" cy="282" r="20" fill="#52525a"/>
+          </svg>
+        </div>
+
+        <div class="squeegee" id="squeegee"></div>
+        <div class="gloss" id="gloss"></div>
+        <div class="beads" id="beads"></div>
+      </div>
+
+      <div class="install-progress"><span id="installBar"></span></div>
+    </div>
   </div>
 </section>
 
-<section class="container" style="padding-bottom:var(--s16)">
+<section class="container" style="padding:var(--s24) 0 var(--s16)">
   <div class="page-head row between">
     <h2 class="reveal">The protection range</h2>
     <a href="{{ url_for('products') }}" class="link-arrow reveal">All products ›</a>
@@ -24,7 +82,7 @@
       <span class="cat">{{ p['category'] }}</span>
       <h3>{{ p['name'] }}</h3>
       <p class="desc">{{ p['tagline'] }}</p>
-      <div class="price">${{ '{:,.0f}'.format(p['price']) }} <small>from</small></div>
+      <div class="price">{{ p['price']|inr }} <small>from</small></div>
       <div class="wtag">{{ p['warranty_years'] }}-year warranty</div>
     </div>
     {% endfor %}
@@ -36,4 +94,74 @@
     <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Get started</a>
   </div>
 </section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function(){
+  var protectedEl = document.getElementById('carProtected');
+  var squeegee = document.getElementById('squeegee');
+  var gloss = document.getElementById('gloss');
+  var beads = document.getElementById('beads');
+  var step = document.getElementById('installStep');
+  var bar = document.getElementById('installBar');
+  if(!protectedEl) return;
+
+  // scatter water beads once
+  (function(){
+    var html = '';
+    for(var i=0;i<26;i++){
+      var size = 4 + Math.random()*9;
+      var x = 14 + Math.random()*64;          // keep over the body
+      var y = 36 + Math.random()*30;
+      html += '<i style="left:'+x+'%;top:'+y+'%;width:'+size+'px;height:'+size+'px"></i>';
+    }
+    beads.innerHTML = html;
+  })();
+
+  var clamp = function(x){ return Math.max(0, Math.min(1, x)); };
+  var map = function(x,a,b){ return clamp((x-a)/(b-a)); };
+
+  function render(p){
+    var rev = map(p, 0.12, 0.62);                       // film application phase
+    protectedEl.style.clipPath = 'inset(0 ' + ((1-rev)*100).toFixed(2) + '% 0 0)';
+
+    var sqOn = p > 0.08 && p < 0.66;
+    squeegee.style.opacity = sqOn ? 1 : 0;
+    squeegee.style.left = (rev*100).toFixed(2) + '%';
+
+    var gl = map(p, 0.62, 0.86);                         // gloss sweep
+    gloss.style.opacity = (gl > 0.01 && gl < 0.99) ? 1 : 0;
+    gloss.style.transform = 'translateX(' + (-40 + gl*230).toFixed(1) + '%) skewX(-18deg)';
+
+    beads.style.opacity = map(p, 0.82, 1);               // water beads
+
+    var s = p < 0.12 ? 'Surface prep'
+          : p < 0.62 ? 'Film application'
+          : p < 0.86 ? 'Squeegee & set'
+          : 'Protected';
+    if(step.textContent !== s) step.textContent = s;
+
+    bar.style.transform = 'scaleX(' + p.toFixed(3) + ')';
+  }
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined'){
+    render(1);                                           // static protected state
+    return;
+  }
+  gsap.registerPlugin(ScrollTrigger);
+  render(0);
+  ScrollTrigger.create({
+    trigger: '.install',
+    start: 'top top',
+    end: '+=2400',
+    pin: true,
+    scrub: 1,
+    invalidateOnRefresh: true,
+    onUpdate: function(self){ render(self.progress); }
+  });
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ ScrollTrigger.refresh(); }); }
+})();
+</script>
 {% endblock %}

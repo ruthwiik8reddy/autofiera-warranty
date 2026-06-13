@@ -39,6 +39,34 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 # --------------------------------------------------------------------------- #
+# Currency — Indian rupee formatting (lakh/crore grouping)
+# --------------------------------------------------------------------------- #
+def inr(value):
+    try:
+        n = int(round(float(value)))
+    except (TypeError, ValueError):
+        return "₹0"
+    sign = "-" if n < 0 else ""
+    s = str(abs(n))
+    if len(s) > 3:
+        last3 = s[-3:]
+        rest = s[:-3]
+        groups = []
+        while len(rest) > 2:
+            groups.insert(0, rest[-2:])
+            rest = rest[:-2]
+        if rest:
+            groups.insert(0, rest)
+        out = ",".join(groups) + "," + last3
+    else:
+        out = s
+    return f"{sign}₹{out}"
+
+
+app.jinja_env.filters["inr"] = inr
+
+
+# --------------------------------------------------------------------------- #
 # Context + helpers
 # --------------------------------------------------------------------------- #
 @app.context_processor

@@ -259,3 +259,36 @@ footer.site{border-top:1px solid var(--border-subtle);padding:var(--s8) 0;color:
 /* Roll status dots reuse badge classes; in_stock => ok, assigned => info, depleted => err */
 .b-in_stock{background:var(--ok-soft);color:var(--ok)}
 .b-depleted{background:var(--err-soft);color:var(--err)}
+
+/* ===== Scroll-scrubbed PPF installation ===== */
+.install{position:relative;height:100vh;background:var(--bg-page);z-index:1}
+.install-stage{height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.install-inner{width:100%;max-width:960px;padding:0 var(--s6);text-align:center}
+.install-eyebrow{font-size:var(--fs-sm);font-weight:var(--w-semibold);color:var(--accent)}
+.install-step{font-size:var(--fs-2xl);letter-spacing:var(--track-tighter);margin:var(--s2) 0 var(--s8);
+  transition:opacity var(--t-base) var(--ease)}
+.car-wrap{position:relative;width:100%;aspect-ratio:800/360;margin:0 auto;max-width:760px}
+.car-wrap svg{position:absolute;inset:0;width:100%;height:100%}
+.car-protected{position:absolute;inset:0;clip-path:inset(0 100% 0 0);will-change:clip-path}
+/* squeegee tracks the application edge */
+.squeegee{position:absolute;top:6%;bottom:18%;width:10px;margin-left:-5px;border-radius:6px;
+  background:linear-gradient(180deg,#3a3a3f,#1d1d1f);box-shadow:0 0 22px rgba(0,0,0,.28);
+  opacity:0;will-change:left,opacity}
+.squeegee::after{content:"";position:absolute;left:-7px;right:-7px;top:-10px;height:18px;border-radius:6px;
+  background:#0a84ff}
+/* gloss sweep */
+.gloss{position:absolute;top:0;bottom:0;width:34%;left:0;pointer-events:none;opacity:0;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.85),transparent);
+  mix-blend-mode:screen;will-change:transform,opacity}
+/* water beads */
+.beads{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity var(--t-base) var(--ease)}
+.beads i{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.95),rgba(180,205,230,.5) 60%,rgba(120,150,180,.25));
+  box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.install-progress{height:3px;width:220px;margin:var(--s10) auto 0;background:var(--border-subtle);border-radius:99px;overflow:hidden}
+.install-progress span{display:block;height:100%;width:100%;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;will-change:transform}
+.install-hint{margin-top:var(--s4);font-size:var(--fs-sm);color:var(--text-muted)}
+@media (prefers-reduced-motion:reduce){
+  .car-protected{clip-path:inset(0 0 0 0)!important}
+  .beads{opacity:1!important}.squeegee,.gloss{opacity:0!important}
+}

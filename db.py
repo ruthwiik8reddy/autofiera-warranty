@@ -235,16 +235,16 @@ def _seed(conn):
         products = [
             ("X-PPF Lite 8", "PPF", "8-Year Paint Protection Film",
              "Self-healing TPU film with a hydrophobic top coat. Guards against rock chips, "
-             "swirls and stains, backed by an 8-year warranty.", 1800, 8),
+             "swirls and stains, backed by an 8-year warranty.", 175000, 8),
             ("X-PPF Pro 10", "PPF", "10-Year Premium PPF",
              "Flagship film — superior gloss, stain resistance and a 10-year warranty for "
-             "full-body coverage.", 2600, 10),
+             "full-body coverage.", 280000, 10),
             ("X-PPF Matte", "PPF", "Matte-Finish PPF",
              "Converts gloss paint to a satin matte finish while protecting it. 8-year warranty.",
-             2100, 8),
+             220000, 8),
             ("X-PPF Ceramic", "Ceramic Coating", "9H Ceramic Coating",
              "Multi-layer 9H ceramic coating for deep gloss and effortless maintenance. "
-             "5-year warranty.", 800, 5),
+             "5-year warranty.", 35000, 5),
         ]
         for p in products:
             conn.execute(

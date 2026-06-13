@@ -12,7 +12,7 @@
       <span class="cat">{{ p['category'] }}</span>
       <h3>{{ p['name'] }}</h3>
       <p class="desc">{{ p['description'] }}</p>
-      <div class="price">${{ '{:,.0f}'.format(p['price']) }} <small>from</small></div>
+      <div class="price">{{ p['price']|inr }} <small>from</small></div>
       <div class="wtag">{{ p['warranty_years'] }}-year warranty</div>
       <a href="{{ url_for('order', product_id=p['id']) }}" class="btn btn-primary btn-block btn-sm" style="margin-top:var(--s5)">Order</a>
     </div>
