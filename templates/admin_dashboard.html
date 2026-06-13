@@ -9,6 +9,8 @@
     <a href="{{ url_for('admin_warranties', status='approved') }}" class="kpi"><div class="num">{{ counts['approved_warranties'] }}</div><div class="label">Approved</div></a>
     <a href="{{ url_for('admin_orders') }}" class="kpi"><div class="num">{{ counts['open_orders'] }}</div><div class="label">Open work orders</div></a>
     <a href="{{ url_for('admin_claims') }}" class="kpi"><div class="num">{{ counts['open_claims'] }}</div><div class="label">Open claims</div></a>
+    <a href="{{ url_for('admin_inventory') }}" class="kpi"><div class="num">{{ counts['rolls_in_stock'] }}</div><div class="label">Rolls in stock</div></a>
+    <a href="{{ url_for('admin_inventory') }}" class="kpi"><div class="num">{{ counts['rolls_assigned'] }}</div><div class="label">Rolls assigned</div></a>
   </div>
 
   <div class="page-head row between"><h2>Pending verifications</h2><a href="{{ url_for('admin_warranties') }}" class="link-arrow">All ›</a></div>

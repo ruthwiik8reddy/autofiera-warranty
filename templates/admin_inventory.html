@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Inventory Ledger — X-PPF Admin{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head"><p class="eyebrow">Admin</p><h1>Roll ledger</h1>
+    <p class="secondary">Every roll across all studios, with the client it was assigned to — your audit trail for verification.</p></div>
+
+  <div class="grid g3" style="margin-bottom:var(--s10)">
+    <div class="kpi"><div class="num">{{ counts['in_stock'] }}</div><div class="label">In stock</div></div>
+    <div class="kpi"><div class="num">{{ counts['assigned'] }}</div><div class="label">Assigned</div></div>
+    <div class="kpi"><div class="num">{{ counts['total'] }}</div><div class="label">Total rolls</div></div>
+  </div>
+
+  {% if rolls %}
+  <div class="tw"><table>
+    <thead><tr><th>Roll ID</th><th>Studio</th><th>Product</th><th>Status</th><th>Assigned client</th><th>Assigned</th></tr></thead>
+    <tbody>{% for r in rolls %}
+      <tr>
+        <td class="mono">{{ r['roll_id'] }}</td>
+        <td>{{ r['owner_studio'] or r['owner_name'] }}</td>
+        <td class="secondary">{{ r['product_name'] or '—' }}</td>
+        <td><span class="badge b-{{ r['status'] }}">{{ r['status'].replace('_',' ') }}</span></td>
+        <td>{% if r['customer_name'] %}{{ r['customer_name'] }}{% if r['warranty_id'] %} · <a class="link-arrow" href="{{ url_for('warranty_view', warranty_id=r['warranty_id']) }}">cert ›</a>{% endif %}{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td class="muted mono">{{ r['assigned_at'][:10] if r['assigned_at'] else '—' }}</td>
+      </tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<div class="card center"><p class="muted">No rolls recorded yet.</p></div>{% endif %}
+</section>
+{% endblock %}

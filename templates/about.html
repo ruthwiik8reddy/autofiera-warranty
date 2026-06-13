@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}About — X-Paint Protection Film{% endblock %}
+{% block content %}
+<section class="hero container">
+  <p class="eyebrow reveal">About</p>
+  <h1 class="reveal">Protection you can verify.</h1>
+  <p class="sub reveal">X-Paint Protection Film makes self-healing films and ceramic coatings —
+    and the platform that issues a tamper-evident digital warranty for every install.</p>
+</section>
+
+<section class="container narrow" style="padding-bottom:var(--s16)">
+  <div class="stack" style="gap:var(--s8)">
+    <div class="reveal">
+      <h2 style="font-size:var(--fs-xl);margin-bottom:var(--s3)">What we do</h2>
+      <p class="secondary">Every roll of X-PPF film carries a unique ID. Authorised studios scan that
+        roll into their inventory, then scan it again when they wrap a client's vehicle. The platform
+        matches the two automatically, deducts the roll from stock, and issues a warranty certificate —
+        co-branded with either the studio's identity or X-PPF's. No paperwork, no guesswork.</p>
+    </div>
+    <div class="reveal">
+      <h2 style="font-size:var(--fs-xl);margin-bottom:var(--s3)">Why it matters</h2>
+      <p class="secondary">A warranty is only worth what backs it. Tying each certificate to a verified,
+        single-use roll means a client can trust the coverage is genuine, and a studio can prove the
+        film on the car is authentic X-PPF.</p>
+    </div>
+    <div class="grid g3 reveal">
+      <div class="card-soft card"><div class="kpi-inline"><b style="font-size:var(--fs-xl)">Self-healing</b></div>
+        <p class="secondary" style="margin-top:var(--s2)">TPU films that recover from swirls and light scratches with heat.</p></div>
+      <div class="card-soft card"><b style="font-size:var(--fs-xl)">Verified rolls</b>
+        <p class="secondary" style="margin-top:var(--s2)">Single-use roll IDs, scanned in and scanned out — fully traceable.</p></div>
+      <div class="card-soft card"><b style="font-size:var(--fs-xl)">Up to 10 yrs</b>
+        <p class="secondary" style="margin-top:var(--s2)">Warranty terms backed by the product and the installer network.</p></div>
+    </div>
+  </div>
+
+  <div class="hero-ink reveal" style="margin-top:var(--s12)">
+    <h2>Become an authorised studio.</h2>
+    <p>Issue verified, co-branded warranties for every car you protect.</p>
+    <a href="{{ url_for('products') }}" class="btn btn-primary btn-lg">See the range</a>
+  </div>
+</section>
+{% endblock %}

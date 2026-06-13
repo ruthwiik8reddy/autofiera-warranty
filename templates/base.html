@@ -19,11 +19,13 @@
       </a>
       <div class="nav-links">
         <a href="{{ url_for('products') }}">Products</a>
+        <a href="{{ url_for('about') }}">About</a>
         {% if current_user %}
           {% if current_role == 'admin' %}
             <a href="{{ url_for('admin_dashboard') }}">Overview</a>
             <a href="{{ url_for('admin_users') }}">Accounts</a>
             <a href="{{ url_for('admin_warranties') }}">Warranties</a>
+            <a href="{{ url_for('admin_inventory') }}">Inventory</a>
             <a href="{{ url_for('admin_orders') }}">Work Orders</a>
             <a href="{{ url_for('admin_claims') }}">Claims</a>
             <a href="{{ url_for('admin_products') }}">Catalog</a>
@@ -31,6 +33,7 @@
             <a href="{{ url_for('studio_dashboard') }}">Dashboard</a>
             <a href="{{ url_for('warranty_register') }}">Register</a>
             <a href="{{ url_for('my_warranties') }}">Warranties</a>
+            <a href="{{ url_for('inventory') }}">Inventory</a>
             <a href="{{ url_for('studio_profile') }}">Studio</a>
           {% endif %}
           <a href="{{ url_for('logout') }}">Sign out</a>
@@ -58,6 +61,20 @@
       <span>{{ brand.email }} · {{ brand.phone }}</span>
     </div>
   </footer>
+
+  <!-- Camera scanner (roll barcodes / QR) -->
+  <div id="scanModal" class="scan-modal no-print" hidden>
+    <div class="scan-card">
+      <div class="row between" style="margin-bottom:var(--s4)">
+        <h3>Scan roll ID</h3>
+        <button type="button" id="scanClose" class="btn btn-ghost btn-sm">Close</button>
+      </div>
+      <div id="reader"></div>
+      <p class="hint" style="margin-top:var(--s3)">Point the camera at the roll's barcode or QR code.
+        The camera needs a secure context — it works on <b>localhost</b> or over HTTPS.</p>
+    </div>
+  </div>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <script>
     // Scroll reveal
@@ -98,6 +115,32 @@
       function sync(){ document.querySelectorAll('.brandopt').forEach(function(o){
         o.classList.toggle('on', o.querySelector('input').checked); }); }
       opts.forEach(function(i){ i.addEventListener('change', sync); }); sync();
+    })();
+
+    // Camera scanner — fills a target input with the decoded roll code
+    (function(){
+      var scanner = null, targetEl = null;
+      var modal = document.getElementById('scanModal');
+      window.openScanner = function(targetId){
+        targetEl = document.getElementById(targetId);
+        if(!targetEl) return;
+        if (typeof Html5Qrcode === 'undefined'){
+          alert('The scanner library could not load. Enter the roll ID manually.'); return;
+        }
+        modal.hidden = false;
+        scanner = new Html5Qrcode("reader");
+        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 260, height: 170 } },
+          function(text){ targetEl.value = (text||'').trim();
+            targetEl.dispatchEvent(new Event('input', {bubbles:true})); closeScanner(); },
+          function(){}
+        ).catch(function(e){ alert('Could not start the camera: ' + e + '\nEnter the roll ID manually.'); closeScanner(); });
+      };
+      function closeScanner(){
+        if(scanner){ scanner.stop().then(function(){ scanner.clear(); scanner=null; }).catch(function(){ scanner=null; }); }
+        modal.hidden = true;
+      }
+      window.closeScanner = closeScanner;
+      document.getElementById('scanClose').addEventListener('click', closeScanner);
     })();
   </script>
 </body>

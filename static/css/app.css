@@ -237,3 +237,25 @@ footer.site{border-top:1px solid var(--border-subtle);padding:var(--s8) 0;color:
   body{background:#fff}.page{padding:0}
   .cert{border:none;box-shadow:none;max-width:100%}
 }
+
+/* Scanner modal */
+.scan-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;padding:var(--s5)}
+.scan-modal[hidden]{display:none}
+.scan-card{background:#fff;border-radius:var(--r-xl);padding:var(--s6);width:100%;max-width:440px;box-shadow:var(--sh-xl)}
+.scan-card #reader{width:100%;border-radius:var(--r-md);overflow:hidden;background:var(--bg-subtle)}
+.scan-card #reader video{border-radius:var(--r-md)}
+
+/* Scan-enabled input pairing */
+.scan-row{display:flex;gap:var(--s2);align-items:stretch}
+.scan-row input{flex:1}
+.btn-scan{flex:0 0 auto;background:var(--bg-ink);color:#fff;border-radius:var(--r-md);
+  padding:0 var(--s4);display:inline-flex;align-items:center;gap:var(--s2);cursor:pointer;
+  border:none;font-family:var(--font);font-size:var(--fs-sm);font-weight:var(--w-medium);
+  transition:transform var(--t-fast) var(--ease)}
+.btn-scan:hover{transform:translateY(-1px)}
+.btn-scan svg{width:16px;height:16px}
+
+/* Roll status dots reuse badge classes; in_stock => ok, assigned => info, depleted => err */
+.b-in_stock{background:var(--ok-soft);color:var(--ok)}
+.b-depleted{background:var(--err-soft);color:var(--err)}

@@ -168,6 +168,23 @@ CREATE TABLE IF NOT EXISTS claim_images (
     filename  TEXT NOT NULL,
     FOREIGN KEY (claim_id) REFERENCES claims(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS inventory (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    owner_id      INTEGER NOT NULL,                 -- studio (or admin) that owns the roll
+    roll_id       TEXT NOT NULL,                    -- scanned / entered roll code
+    product_name  TEXT,
+    length_m      REAL,                             -- metres of film on the roll (optional)
+    status        TEXT NOT NULL DEFAULT 'in_stock', -- in_stock | assigned | depleted
+    warranty_id   INTEGER,                          -- warranty it was assigned to
+    customer_name TEXT,                             -- end client it was assigned to
+    note          TEXT,
+    created_at    TEXT NOT NULL,
+    assigned_at   TEXT,
+    UNIQUE(owner_id, roll_id),
+    FOREIGN KEY (owner_id) REFERENCES users(id),
+    FOREIGN KEY (warranty_id) REFERENCES warranties(id)
+);
 """
 
 
@@ -544,6 +561,127 @@ def update_claim_status(claim_id, status, admin_note=""):
         conn.close()
 
 
+# --------------------------------------------------------------------------- #
+# Inventory (film rolls)
+# --------------------------------------------------------------------------- #
+def add_roll(owner_id, roll_id, product_name=None, length_m=None, note=None):
+    """Add a roll to an owner's inventory. Returns (id, error_message)."""
+    roll_id = (roll_id or "").strip()
+    if not roll_id:
+        return None, "Roll ID is required."
+    conn = get_conn()
+    try:
+        if conn.execute("SELECT 1 FROM inventory WHERE owner_id=? AND roll_id=?",
+                        (owner_id, roll_id)).fetchone():
+            return None, f"Roll {roll_id} is already in your inventory."
+        cur = conn.execute(
+            "INSERT INTO inventory (owner_id, roll_id, product_name, length_m, status, note, created_at) "
+            "VALUES (?, ?, ?, ?, 'in_stock', ?, ?)",
+            (owner_id, roll_id, product_name, length_m, note, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+        return cur.lastrowid, None
+    finally:
+        conn.close()
+
+
+def get_roll(owner_id, roll_id):
+    conn = get_conn()
+    try:
+        return conn.execute("SELECT * FROM inventory WHERE owner_id=? AND roll_id=?",
+                            (owner_id, (roll_id or "").strip())).fetchone()
+    finally:
+        conn.close()
+
+
+def list_inventory(owner_id=None, status=None):
+    """owner_id=None returns the full ledger across all owners (admin view)."""
+    conn = get_conn()
+    try:
+        q = ("SELECT i.*, u.name AS owner_name, u.studio_name AS owner_studio "
+             "FROM inventory i JOIN users u ON u.id = i.owner_id WHERE 1=1")
+        params = []
+        if owner_id:
+            q += " AND i.owner_id = ?"; params.append(owner_id)
+        if status:
+            q += " AND i.status = ?"; params.append(status)
+        q += " ORDER BY CASE i.status WHEN 'in_stock' THEN 0 WHEN 'assigned' THEN 1 ELSE 2 END, i.created_at DESC"
+        return conn.execute(q, params).fetchall()
+    finally:
+        conn.close()
+
+
+def inventory_counts(owner_id=None):
+    conn = get_conn()
+    try:
+        def one(extra, p):
+            return conn.execute("SELECT COUNT(*) c FROM inventory WHERE 1=1 " + extra, p).fetchone()["c"]
+        scope, p = ("", [])
+        if owner_id:
+            scope, p = (" AND owner_id=?", [owner_id])
+        return {
+            "total":    one(scope, p),
+            "in_stock": one(scope + " AND status='in_stock'", p),
+            "assigned": one(scope + " AND status='assigned'", p),
+        }
+    finally:
+        conn.close()
+
+
+def assign_roll(roll_pk, warranty_id, customer_name):
+    conn = get_conn()
+    try:
+        conn.execute(
+            "UPDATE inventory SET status='assigned', warranty_id=?, customer_name=?, assigned_at=? "
+            "WHERE id=?",
+            (warranty_id, customer_name, datetime.utcnow().isoformat(), roll_pk),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def release_roll_for_warranty(warranty_id):
+    """Return any roll assigned to this warranty back to stock (e.g. on rejection)."""
+    conn = get_conn()
+    try:
+        conn.execute(
+            "UPDATE inventory SET status='in_stock', warranty_id=NULL, customer_name=NULL, "
+            "assigned_at=NULL WHERE warranty_id=?", (warranty_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def auto_verify_roll(warranty_id):
+    """
+    Cross-check the roll number entered on a warranty against the registering
+    studio's inventory. If it matches an in-stock roll, assign (deduct) it and
+    report it as verified. Returns one of: 'verified' | 'reused' | 'unknown' | 'none'.
+    """
+    conn = get_conn()
+    try:
+        w = conn.execute("SELECT user_id, roll_id, customer_name FROM warranties WHERE id=?",
+                         (warranty_id,)).fetchone()
+        if not w or not (w["roll_id"] or "").strip():
+            return "none"
+        roll = conn.execute("SELECT * FROM inventory WHERE owner_id=? AND roll_id=?",
+                            (w["user_id"], w["roll_id"].strip())).fetchone()
+        if not roll:
+            return "unknown"
+        if roll["status"] != "in_stock":
+            return "reused"
+        conn.execute(
+            "UPDATE inventory SET status='assigned', warranty_id=?, customer_name=?, assigned_at=? "
+            "WHERE id=?",
+            (warranty_id, w["customer_name"], datetime.utcnow().isoformat(), roll["id"]),
+        )
+        conn.commit()
+        return "verified"
+    finally:
+        conn.close()
+
+
 def admin_counts():
     conn = get_conn()
     try:
@@ -556,6 +694,8 @@ def admin_counts():
             "total_orders": one("SELECT COUNT(*) c FROM orders"),
             "open_claims": one("SELECT COUNT(*) c FROM claims WHERE status NOT IN ('resolved','rejected')"),
             "studios": one("SELECT COUNT(*) c FROM users WHERE role='studio'"),
+            "rolls_in_stock": one("SELECT COUNT(*) c FROM inventory WHERE status='in_stock'"),
+            "rolls_assigned": one("SELECT COUNT(*) c FROM inventory WHERE status='assigned'"),
         }
     finally:
         conn.close()

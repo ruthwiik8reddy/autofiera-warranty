@@ -29,6 +29,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
 ALLOWED_EXT = {"png", "jpg", "jpeg", "webp", "gif", "heic", "svg"}
 MAX_CONTENT_MB = 25
+MIN_PASSWORD_LEN = 8
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me-in-production")
@@ -46,6 +47,7 @@ def inject_globals():
         "current_user": _current_user(),
         "current_role": session.get("role"),
         "year": datetime.utcnow().year,
+        "min_pw": MIN_PASSWORD_LEN,
         "brand": {
             "name": "X-Paint Protection Film",
             "short": "X-PPF",
@@ -113,6 +115,11 @@ def _save_many(file_field):
 @app.route("/")
 def index():
     return render_template("index.html", products=db.list_products())
+
+
+@app.route("/about")
+def about():
+    return render_template("about.html", products=db.list_products())
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -213,7 +220,22 @@ def warranty_register():
             "brand_choice": brand_choice,
         }
         wid = db.create_warranty(data, parts, images)
-        flash("Warranty submitted for verification.", "success")
+        # Auto-verification: match the entered roll number against this studio's
+        # inventory. A genuine in-stock roll is deducted and the warranty is
+        # approved automatically; anything else is queued for manual review.
+        result = db.auto_verify_roll(wid)
+        if result == "verified":
+            db.approve_warranty(wid, admin_note=f"Auto-verified: roll {data['roll_id']} matched inventory.")
+            flash("Roll matched your inventory — warranty auto-verified, approved, and the roll "
+                  "was deducted from stock.", "success")
+        elif result == "reused":
+            flash("That roll is already assigned to another warranty. Sent to X-PPF for manual "
+                  "review.", "error")
+        elif result == "unknown":
+            flash("That roll isn't in your inventory yet, so it couldn't be auto-verified. "
+                  "Submitted to X-PPF for manual verification.", "info")
+        else:
+            flash("Warranty submitted for verification.", "success")
         return redirect(url_for("warranty_view", warranty_id=wid))
 
     return render_template("warranty_register.html", groups=db.CAR_PART_GROUPS,
@@ -317,15 +339,18 @@ def admin_dashboard():
 def admin_users():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
         if db.get_user_by_email(email):
             flash("An account with that email already exists.", "error")
+        elif len(password) < MIN_PASSWORD_LEN:
+            flash(f"Password must be at least {MIN_PASSWORD_LEN} characters.", "error")
         else:
             role = "admin" if request.form.get("role") == "admin" else "studio"
             logo = _save_one("logo")
             db.create_user(
                 name=request.form.get("name", "").strip(), email=email,
                 phone=request.form.get("phone", "").strip(),
-                password=request.form.get("password", ""), role=role,
+                password=password, role=role,
                 studio_name=request.form.get("studio_name", "").strip() or None,
                 studio_logo=logo,
             )
@@ -346,6 +371,7 @@ def admin_warranties():
 @admin_required
 def admin_approve(warranty_id):
     db.approve_warranty(warranty_id, admin_note=request.form.get("admin_note", "").strip())
+    db.auto_verify_roll(warranty_id)  # deduct the roll from stock if it's there
     flash(f"Warranty #{warranty_id} approved — certificate issued.", "success")
     return redirect(request.referrer or url_for("admin_warranties"))
 
@@ -354,6 +380,7 @@ def admin_approve(warranty_id):
 @admin_required
 def admin_reject(warranty_id):
     db.reject_warranty(warranty_id, admin_note=request.form.get("admin_note", "").strip())
+    db.release_roll_for_warranty(warranty_id)  # return any deducted roll to stock
     flash(f"Warranty #{warranty_id} rejected.", "info")
     return redirect(request.referrer or url_for("admin_warranties"))
 
@@ -418,6 +445,37 @@ def admin_product_toggle(product_id):
 # --------------------------------------------------------------------------- #
 # Uploaded files
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# Inventory (film rolls) — scan in, track, assign
+# --------------------------------------------------------------------------- #
+@app.route("/inventory", methods=["GET", "POST"])
+@login_required
+def inventory():
+    if request.method == "POST":
+        length = request.form.get("length_m", "").strip()
+        _id, err = db.add_roll(
+            owner_id=session["user_id"],
+            roll_id=request.form.get("roll_id", ""),
+            product_name=request.form.get("product_name", "").strip() or None,
+            length_m=float(length) if length else None,
+            note=request.form.get("note", "").strip() or None,
+        )
+        flash(err or "Roll added to inventory.", "error" if err else "success")
+        return redirect(url_for("inventory"))
+    return render_template("inventory.html",
+                           rolls=db.list_inventory(owner_id=session["user_id"]),
+                           counts=db.inventory_counts(owner_id=session["user_id"]),
+                           products=db.list_products())
+
+
+@app.route("/admin/inventory")
+@admin_required
+def admin_inventory():
+    return render_template("admin_inventory.html",
+                           rolls=db.list_inventory(),
+                           counts=db.inventory_counts())
+
+
 @app.route("/uploads/<path:filename>")
 @login_required
 def uploads(filename):

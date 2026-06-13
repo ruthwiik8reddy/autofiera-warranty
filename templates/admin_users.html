@@ -18,7 +18,9 @@
           <div class="frow">
             <div class="field"><label>Role <span class="req">*</span></label>
               <select name="role"><option value="studio">Studio (user)</option><option value="admin">Admin</option></select></div>
-            <div class="field"><label>Temporary password <span class="req">*</span></label><input type="text" name="password" required></div>
+            <div class="field"><label>Temporary password <span class="req">*</span></label>
+              <input type="text" name="password" required minlength="{{ min_pw }}">
+              <p class="hint">At least {{ min_pw }} characters.</p></div>
           </div>
           <div class="field"><label>Studio name</label><input type="text" name="studio_name" placeholder="For studio accounts"></div>
           <div class="field"><label>Studio logo</label><input type="file" name="logo" accept="image/*">

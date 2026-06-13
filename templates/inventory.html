@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Inventory — X-PPF{% endblock %}
+{% block content %}
+<section class="container page">
+  <div class="page-head"><p class="eyebrow">Film rolls</p><h1>Inventory</h1>
+    <p class="secondary">Scan rolls in as you receive them. When you register a warranty with a roll,
+      it's matched automatically and deducted here.</p></div>
+
+  <div class="grid g3" style="margin-bottom:var(--s10)">
+    <div class="kpi"><div class="num">{{ counts['in_stock'] }}</div><div class="label">In stock</div></div>
+    <div class="kpi"><div class="num">{{ counts['assigned'] }}</div><div class="label">Assigned</div></div>
+    <div class="kpi"><div class="num">{{ counts['total'] }}</div><div class="label">Total rolls</div></div>
+  </div>
+
+  <div class="grid g2">
+    <div>
+      <h2 style="margin-bottom:var(--s4)">Add a roll</h2>
+      <div class="card">
+        <form method="POST">
+          <div class="field"><label>Roll ID <span class="req">*</span></label>
+            <div class="scan-row">
+              <input type="text" id="inv_roll" name="roll_id" required class="mono" placeholder="XP-LITE8-23A4471">
+              <button type="button" class="btn-scan" onclick="openScanner('inv_roll')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M3 12h18"/></svg>
+                Scan
+              </button>
+            </div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Product</label>
+              <select name="product_name"><option value="">—</option>
+                {% for p in products %}<option value="{{ p['name'] }}">{{ p['name'] }}</option>{% endfor %}</select></div>
+            <div class="field"><label>Length (m)</label><input type="number" name="length_m" step="any" placeholder="30"></div>
+          </div>
+          <div class="field"><label>Note</label><input type="text" name="note" placeholder="Optional"></div>
+          <button class="btn btn-primary btn-block btn-lg" type="submit">Add to inventory</button>
+        </form>
+      </div>
+    </div>
+
+    <div>
+      <h2 style="margin-bottom:var(--s4)">My rolls</h2>
+      {% if rolls %}
+      <div class="tw"><table>
+        <thead><tr><th>Roll ID</th><th>Product</th><th>Status</th><th>Assigned to</th></tr></thead>
+        <tbody>{% for r in rolls %}
+          <tr>
+            <td class="mono">{{ r['roll_id'] }}{% if r['length_m'] %}<br><span class="muted">{{ r['length_m']|int }} m</span>{% endif %}</td>
+            <td class="secondary">{{ r['product_name'] or '—' }}</td>
+            <td><span class="badge b-{{ r['status'] }}">{{ r['status'].replace('_',' ') }}</span></td>
+            <td>{% if r['customer_name'] %}{{ r['customer_name'] }}{% if r['warranty_id'] %}<br><a class="link-arrow" href="{{ url_for('warranty_view', warranty_id=r['warranty_id']) }}">View ›</a>{% endif %}{% else %}<span class="muted">—</span>{% endif %}</td>
+          </tr>
+        {% endfor %}</tbody></table></div>
+      {% else %}<div class="card center"><p class="muted">No rolls yet. Scan your first roll in.</p></div>{% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -47,8 +47,15 @@
           </select>
         </div>
         <div class="field"><label>Film roll ID <span class="req">*</span></label>
-          <input type="text" name="roll_id" required value="{{ form.get('roll_id','') }}" class="mono" placeholder="XP-LITE8-23A4471">
-          <p class="hint">Verified against stock before approval.</p>
+          <div class="scan-row">
+            <input type="text" id="roll_id" name="roll_id" required value="{{ form.get('roll_id','') }}" class="mono" placeholder="XP-LITE8-23A4471">
+            <button type="button" class="btn-scan" onclick="openScanner('roll_id')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M3 12h18"/></svg>
+              Scan
+            </button>
+          </div>
+          <p class="hint">Scanned or typed. If it matches an in-stock roll in your inventory, the
+            warranty is auto-verified and the roll is deducted from stock.</p>
         </div>
       </div>
     </div>
