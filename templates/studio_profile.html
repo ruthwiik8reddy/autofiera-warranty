@@ -8,6 +8,9 @@
     <form method="POST" enctype="multipart/form-data">
       <div class="field"><label>Studio name</label>
         <input type="text" name="studio_name" value="{{ user['studio_name'] or '' }}" placeholder="Apex Auto Studio"></div>
+      <div class="field"><label>City</label>
+        <input type="text" name="city" value="{{ user['city'] or '' }}" placeholder="Hyderabad">
+        <p class="hint">Hyderabad studios get local courier delivery (Rapido / Uber Parcel); others get Air / Bus freight.</p></div>
       <div class="field"><label>Studio logo</label>
         {% if user['studio_logo'] %}<div style="margin-bottom:var(--s3)"><img class="logo-preview" src="{{ url_for('uploads', filename=user['studio_logo']) }}" alt="current logo"></div>{% endif %}
         <input type="file" name="logo" accept="image/*">

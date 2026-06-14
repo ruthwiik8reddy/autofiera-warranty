@@ -1,36 +1,36 @@
-/* tokens.css — X-PPF design tokens. Apple-clean light system. */
+/* tokens.css — X-PPF design tokens. Premium dark theme (matches the footage). */
 :root {
   /* Surfaces */
-  --bg-page:     #ffffff;
-  --bg-subtle:   #f5f5f7;   /* Apple's signature gray */
-  --bg-elevated: #ffffff;
-  --bg-ink:      #1d1d1f;    /* near-black sections */
-  --bg-ink-soft: #2b2b2f;
+  --bg-page:     #08090b;   /* near-black page */
+  --bg-subtle:   #121318;   /* subtle panels */
+  --bg-elevated: #16181e;   /* cards */
+  --bg-ink:      #000000;   /* deepest black */
+  --bg-ink-soft: #1b1d24;
 
   /* Text */
-  --text-primary:   #1d1d1f;
-  --text-secondary: #6e6e73;
-  --text-muted:     #86868b;
+  --text-primary:   #f5f5f7;
+  --text-secondary: #b2b4bb;
+  --text-muted:     #7e818a;
   --text-on-ink:    #f5f5f7;
   --text-on-ink-2:  #a1a1a6;
 
   /* Lines */
-  --border:        #d2d2d7;
-  --border-subtle: #e8e8ed;
+  --border:        #2b2d35;
+  --border-subtle: #1f2128;
 
-  /* Accent — protective blue */
-  --accent:        #0071e3;
-  --accent-hover:  #0077ed;
-  --accent-press:  #006edb;
-  --accent-soft:   rgba(0,113,227,0.08);
+  /* Accent — protective blue (Apple dark-mode blue) */
+  --accent:        #0a84ff;
+  --accent-hover:  #3b9dff;
+  --accent-press:  #0a84ff;
+  --accent-soft:   rgba(10,132,255,0.16);
 
-  /* Status */
-  --ok:    #1a9e54;  --ok-soft: rgba(26,158,84,0.1);
-  --warn:  #b25e00;  --warn-soft: rgba(178,94,0,0.1);
-  --err:   #d62f2f;  --err-soft: rgba(214,47,47,0.1);
-  --info:  #0071e3;  --info-soft: rgba(0,113,227,0.1);
+  /* Status (brighter for dark) */
+  --ok:    #34c759;  --ok-soft: rgba(52,199,89,0.15);
+  --warn:  #ff9f0a;  --warn-soft: rgba(255,159,10,0.15);
+  --err:   #ff453a;  --err-soft: rgba(255,69,58,0.15);
+  --info:  #0a84ff;  --info-soft: rgba(10,132,255,0.15);
 
-  /* Type — single family, many weights (SF-like) */
+  /* Type */
   --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
   --mono: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, monospace;
 
@@ -46,12 +46,12 @@
 
   --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:24px; --r-2xl:32px; --r-full:9999px;
 
-  --sh-sm: 0 1px 2px rgba(0,0,0,.05);
-  --sh-md: 0 4px 16px rgba(0,0,0,.08);
-  --sh-lg: 0 12px 40px rgba(0,0,0,.10);
-  --sh-xl: 0 24px 64px rgba(0,0,0,.14);
+  --sh-sm: 0 1px 2px rgba(0,0,0,.5);
+  --sh-md: 0 6px 22px rgba(0,0,0,.55);
+  --sh-lg: 0 16px 48px rgba(0,0,0,.6);
+  --sh-xl: 0 28px 70px rgba(0,0,0,.7);
 
   --t-fast: 150ms; --t-base: 280ms; --t-slow: 600ms;
-  --ease: cubic-bezier(0.16,1,0.3,1);          /* expo out — luxury/Apple */
+  --ease: cubic-bezier(0.16,1,0.3,1);
   --ease-quart: cubic-bezier(0.25,1,0.5,1);
 }

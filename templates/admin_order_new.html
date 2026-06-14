@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Place Order — X-PPF Admin{% endblock %}
+{% block content %}
+<section class="container narrow page">
+  <div class="page-head"><p class="eyebrow">Admin</p><h1>Place an order for a studio</h1>
+    <p class="secondary">Create a film order on behalf of any studio. Delivery options follow that studio's city.</p></div>
+  <div class="card">
+    <form method="POST">
+      <div class="field"><label>Studio <span class="req">*</span></label>
+        <select name="studio_id" id="studioSel" required>
+          <option value="">Select studio</option>
+          {% for s in studios %}<option value="{{ s['id'] }}" data-city="{{ s['city'] or '' }}" data-verified="{{ s['verified'] }}">{{ s['studio_name'] or s['name'] }}{% if s['city'] %} · {{ s['city'] }}{% endif %}{% if not s['verified'] %} (unverified){% endif %}</option>{% endfor %}
+        </select></div>
+      <div class="frow">
+        <div class="field"><label>Product <span class="req">*</span></label>
+          <select name="product_id" required><option value="">Select product</option>
+            {% for p in products %}<option value="{{ p['id'] }}">{{ p['name'] }} ({{ p['warranty_years'] }}yr)</option>{% endfor %}</select></div>
+        <div class="field"><label>Quantity (rolls)</label><input type="number" name="quantity" min="1" value="1"></div>
+      </div>
+      <div class="field"><label>Delivery mode</label>
+        <select name="transport_mode" id="modeSel"><option value="">—</option></select>
+        <p class="hint" id="modeHint">Select a studio to see its delivery options.</p></div>
+      <div class="field"><label>Notes</label><textarea name="notes"></textarea></div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit">Place order</button>
+    </form>
+  </div>
+</section>
+<script>
+(function(){
+  var sel=document.getElementById('studioSel'), mode=document.getElementById('modeSel'), hint=document.getElementById('modeHint');
+  function opts(city){ return (city && city.toLowerCase().indexOf('hyderabad')>-1) ? ['Rapido','Uber Parcel'] : ['Air Cargo','Bus Parcel']; }
+  sel.addEventListener('change', function(){
+    var o=sel.options[sel.selectedIndex], city=o.getAttribute('data-city')||'';
+    var list=opts(city); mode.innerHTML='';
+    list.forEach(function(m){ var op=document.createElement('option'); op.value=m; op.textContent=m; mode.appendChild(op); });
+    hint.textContent = city ? ('Options for '+city+'.') : 'Outstation options (no city set).';
+  });
+})();
+</script>
+{% endblock %}

@@ -5,17 +5,27 @@
   <div class="page-head">
     <p class="eyebrow">{{ product['category'] }}</p>
     <h1>Order · {{ product['name'] }}</h1>
-    <p class="secondary">{{ product['tagline'] }} · {{ product['warranty_years'] }}-year warranty · {{ product['price']|inr }} from</p>
+    <p class="secondary">{{ product['tagline'] }} · {{ product['warranty_years'] }}-year film.
+      Just tell us how many rolls and how you'd like them delivered — no vehicle details needed.</p>
   </div>
   <div class="card">
     <form method="POST">
-      <div class="field"><label>Vehicle (year / make / model) <span class="req">*</span></label>
-        <input type="text" name="vehicle_ymm" required placeholder="2026 BMW iX1"></div>
-      <div class="frow">
-        <div class="field"><label>Colour</label><input type="text" name="vehicle_color" placeholder="Carbon Black Metallic"></div>
-        <div class="field"><label>VIN</label><input type="text" name="vin" placeholder="WBA67FX09TY466124" style="text-transform:uppercase"></div>
+      <div class="field"><label>Quantity (rolls) <span class="req">*</span></label>
+        <input type="number" name="quantity" min="1" value="1" required></div>
+
+      <div class="field"><label>Delivery mode <span class="req">*</span></label>
+        <div class="brandopts">
+          {% for opt in options %}
+          <label class="brandopt"><input type="radio" name="transport_mode" value="{{ opt }}" {% if loop.first %}checked{% endif %}>
+            <h4>{{ opt }}</h4>
+            <p>{% if opt in ['Rapido','Uber Parcel'] %}Local same-day courier within Hyderabad.{% else %}Outstation freight to your city.{% endif %}</p>
+          </label>
+          {% endfor %}
+        </div>
+        <p class="hint">{% if user['city'] and 'hyderabad' in user['city']|lower %}Local options shown for Hyderabad.{% else %}Outstation options shown{% if user['city'] %} for {{ user['city'] }}{% endif %}. Set your city on your <a href="{{ url_for('studio_profile') }}">studio page</a>.{% endif %}</p>
       </div>
-      <div class="field"><label>Notes</label><textarea name="notes" placeholder="Preferred dates, full vs partial coverage, anything else."></textarea></div>
+
+      <div class="field"><label>Notes</label><textarea name="notes" placeholder="Anything else for this order."></textarea></div>
       <button class="btn btn-primary btn-block btn-lg" type="submit">Place order</button>
     </form>
   </div>

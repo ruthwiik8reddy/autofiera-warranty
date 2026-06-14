@@ -5,7 +5,7 @@
   <div class="page-head"><p class="eyebrow">Admin</p><h1>Product catalog</h1></div>
   <div class="grid g2">
     <div><h2 style="margin-bottom:var(--s4)">Add a product</h2>
-      <div class="card"><form method="POST">
+      <div class="card"><form method="POST" enctype="multipart/form-data">
         <div class="field"><label>Name <span class="req">*</span></label><input type="text" name="name" required></div>
         <div class="frow">
           <div class="field"><label>Category</label><select name="category"><option>PPF</option><option>Ceramic Coating</option></select></div>
@@ -13,6 +13,8 @@
         <div class="field"><label>Tagline</label><input type="text" name="tagline"></div>
         <div class="field"><label>Description</label><textarea name="description"></textarea></div>
         <div class="field"><label>Price (₹)</label><input type="number" name="price" step="any"></div>
+        <div class="field"><label>Product picture</label><input type="file" name="image" accept="image/*">
+          <p class="hint">Optional — leave blank and a branded tile matching the warranty term (5 / 7 / 8 / 10 yr) is used automatically.</p></div>
         <button class="btn btn-primary btn-block btn-lg" type="submit">Add product</button>
       </form></div></div>
     <div><h2 style="margin-bottom:var(--s4)">All products</h2><div class="stack">

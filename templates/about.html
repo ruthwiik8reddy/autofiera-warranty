@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 {% block title %}About — X-Paint Protection Film{% endblock %}
 {% block content %}
-<section class="hero container">
-  <p class="eyebrow reveal">About</p>
-  <h1 class="reveal">Protection you can verify.</h1>
-  <p class="sub reveal">X-Paint Protection Film makes self-healing films and ceramic coatings —
-    and the platform that issues a tamper-evident digital warranty for every install.</p>
-</section>
+<div class="vband">
+    <video autoplay muted loop playsinline preload="metadata"
+           poster="{{ url_for('static', filename='img/cat-ceramic.jpg') }}">
+      <source src="{{ url_for('static', filename='video/about.mp4') }}" type="video/mp4">
+    </video>
+    <div class="scrim"></div>
+    <div class="container"><div class="vb-inner">
+      <p class="eyebrow">About</p>
+      <h2>Protection you can verify.</h2>
+      <p>Self-healing films and ceramic coatings, with a tamper-evident digital warranty for every install.</p>
+    </div></div>
+  </div>
 
 <section class="container narrow" style="padding-bottom:var(--s16)">
   <div class="stack" style="gap:var(--s8)">

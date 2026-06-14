@@ -2,20 +2,44 @@
 {% block title %}Work Orders — X-PPF Admin{% endblock %}
 {% block content %}
 <section class="container page">
-  <div class="page-head"><p class="eyebrow">Admin · Incoming</p><h1>Work orders</h1></div>
+  <div class="page-head row between">
+    <div><p class="eyebrow">Admin · Incoming</p><h1>Work orders</h1></div>
+    <div class="row">
+      <a href="{{ url_for('admin_order_new') }}" class="btn btn-ghost btn-sm">Place order for studio</a>
+      <form method="POST" action="{{ url_for('admin_auto_assign') }}"><button class="btn btn-primary btn-sm" type="submit">⚡ Auto-assign agent</button></form>
+    </div>
+  </div>
   {% if orders %}
-  <div class="tw"><table><thead><tr><th>Order</th><th>Studio</th><th>Vehicle</th><th>Notes</th><th>Status</th><th>Update</th></tr></thead>
+  <div class="tw"><table><thead><tr><th>Order</th><th>Studio</th><th>Qty</th><th>Delivery</th><th>Roll (term)</th><th>Status</th><th>Update</th></tr></thead>
     <tbody>{% for o in orders %}
-      <tr><td><b>{{ o['product_name'] }}</b><br><span class="muted">{{ o['created_at'][:10] }}</span></td>
-      <td>{{ o['studio_name'] or o['customer_name'] }}<br><span class="muted">{{ o['customer_phone'] or '' }}<br>{{ o['customer_email'] }}</span></td>
-      <td>{{ o['vehicle_ymm'] or '—' }}<br><span class="muted">{{ o['vehicle_color'] or '' }} {{ o['vin'] or '' }}</span></td>
-      <td class="secondary">{{ o['notes'] or '—' }}</td>
-      <td><span class="badge b-{{ o['status'] }}">{{ o['status'].replace('_',' ') }}</span></td>
-      <td><form method="POST" action="{{ url_for('admin_order_status', order_id=o['id']) }}" class="row" style="gap:var(--s2)">
-        <select name="status" style="padding:var(--s2);font-size:var(--fs-sm)">
-          {% for s in ['received','scheduled','in_progress','completed','cancelled'] %}<option value="{{ s }}" {% if o['status']==s %}selected{% endif %}>{{ s.replace('_',' ') }}</option>{% endfor %}
-        </select><button class="btn btn-ghost btn-sm" type="submit">Save</button></form></td></tr>
+      <tr>
+        <td><b>{{ o['product_name'] }}</b><br><span class="muted">{{ o['created_at'][:10] }} · {{ o['product_warranty_years'] or '—' }}yr</span></td>
+        <td>{{ o['studio_name'] or o['customer_name'] }}
+          {% if o['studio_verified'] %}<span class="badge b-approved" style="margin-left:4px">verified</span>{% else %}<span class="badge b-pending" style="margin-left:4px">unverified</span>{% endif %}
+          <br><span class="muted">{{ o['customer_email'] }}</span></td>
+        <td>{{ o['quantity'] or 1 }}</td>
+        <td>{{ o['transport_mode'] or '—' }}</td>
+        <td>
+          {% if o['assigned_roll'] %}<span class="mono">{{ o['assigned_roll'] }}</span>
+          {% else %}
+            {% set rolls = avail.get(o['product_warranty_years']) or [] %}
+            <form method="POST" action="{{ url_for('admin_assign_roll', order_id=o['id']) }}" class="row" style="gap:var(--s2)">
+              <select name="roll_pk" style="padding:var(--s2);font-size:var(--fs-sm);min-width:150px">
+                {% if rolls %}{% for r in rolls %}<option value="{{ r['id'] }}">{{ r['roll_id'] }} ({{ r['warranty_years'] }}yr)</option>{% endfor %}
+                {% else %}<option value="">No {{ o['product_warranty_years'] }}yr rolls in stock</option>{% endif %}
+              </select>
+              <button class="btn btn-ok btn-sm" type="submit" {% if not rolls %}disabled{% endif %}>Assign</button>
+            </form>
+          {% endif %}
+        </td>
+        <td><span class="badge b-{{ o['status'] }}">{{ o['status'].replace('_',' ') }}</span></td>
+        <td><form method="POST" action="{{ url_for('admin_order_status', order_id=o['id']) }}" class="row" style="gap:var(--s2)">
+          <select name="status" style="padding:var(--s2);font-size:var(--fs-sm)">
+            {% for s in ['received','scheduled','in_progress','completed','cancelled'] %}<option value="{{ s }}" {% if o['status']==s %}selected{% endif %}>{{ s.replace('_',' ') }}</option>{% endfor %}
+          </select><button class="btn btn-ghost btn-sm" type="submit">Save</button></form></td>
+      </tr>
     {% endfor %}</tbody></table></div>
-  {% else %}<div class="card center"><p class="muted">No work orders yet.</p></div>{% endif %}
+  {% else %}<div class="card center"><p class="muted">No work orders yet.</p>
+    <a href="{{ url_for('admin_order_new') }}" class="btn btn-primary btn-sm" style="margin-top:var(--s4)">Place one for a studio</a></div>{% endif %}
 </section>
 {% endblock %}

@@ -37,6 +37,10 @@ app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_MB * 1024 * 1024
 app.config["UPLOAD_DIR"] = UPLOAD_DIR
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# Initialise the database on import (idempotent) so the app also works under a
+# WSGI server like PythonAnywhere/gunicorn, not just `python app.py`.
+db.init_db()
+
 
 # --------------------------------------------------------------------------- #
 # Currency — Indian rupee formatting (lakh/crore grouping)
@@ -64,6 +68,34 @@ def inr(value):
 
 
 app.jinja_env.filters["inr"] = inr
+
+
+def transport_options(city):
+    """Local couriers for Hyderabad studios; outstation freight otherwise."""
+    if city and "hyderabad" in city.lower():
+        return ["Rapido", "Uber Parcel"]
+    return ["Air Cargo", "Bus Parcel"]
+
+
+# Branded tier tiles used as automatic product pictures when none is uploaded.
+TIER_IMG = {5: "img/cat-5yr.jpg", 7: "img/cat-7yr.jpg", 8: "img/cat-8yr.jpg", 10: "img/cat-10yr.jpg"}
+
+
+def prod_img(product):
+    """A product's own image if set, else the closest branded tier tile."""
+    try:
+        if product["image"]:
+            return product["image"]
+    except (KeyError, TypeError):
+        pass
+    yrs = (product["warranty_years"] if product["warranty_years"] else 10)
+    if yrs in TIER_IMG:
+        return TIER_IMG[yrs]
+    nearest = min(TIER_IMG, key=lambda k: abs(k - yrs))
+    return TIER_IMG[nearest]
+
+
+app.jinja_env.globals["prod_img"] = prod_img
 
 
 # --------------------------------------------------------------------------- #
@@ -150,6 +182,30 @@ def about():
     return render_template("about.html", products=db.list_products())
 
 
+# --------------------------------------------------------------------------- #
+# PWA — service worker (root scope), manifest, offline fallback
+# --------------------------------------------------------------------------- #
+@app.route("/sw.js")
+def service_worker():
+    resp = send_from_directory(os.path.join(BASE_DIR, "static", "pwa"), "sw.js")
+    resp.headers["Content-Type"] = "application/javascript"
+    resp.headers["Service-Worker-Allowed"] = "/"
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
+@app.route("/manifest.webmanifest")
+def manifest():
+    resp = send_from_directory(os.path.join(BASE_DIR, "static", "pwa"), "manifest.webmanifest")
+    resp.headers["Content-Type"] = "application/manifest+json"
+    return resp
+
+
+@app.route("/offline")
+def offline():
+    return render_template("offline.html")
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -188,16 +244,23 @@ def order(product_id):
     product = db.get_product(product_id)
     if not product:
         abort(404)
+    user = _current_user()
+    options = transport_options(user["city"])
     if request.method == "POST":
-        db.create_order(
-            user_id=session["user_id"], product_id=product["id"], product_name=product["name"],
-            vehicle_ymm=request.form.get("vehicle_ymm", "").strip(),
-            vehicle_color=request.form.get("vehicle_color", "").strip(),
-            vin=request.form.get("vin", "").strip(), notes=request.form.get("notes", "").strip(),
-        )
-        flash("Order placed. X-PPF will reach out to confirm fulfilment.", "success")
+        try:
+            qty = max(1, int(request.form.get("quantity") or 1))
+        except ValueError:
+            qty = 1
+        mode = request.form.get("transport_mode", "").strip()
+        if mode not in options:
+            flash("Select a valid delivery mode.", "error")
+            return render_template("order.html", product=product, options=options, user=user)
+        db.create_order(user_id=session["user_id"], product_id=product["id"],
+                        product_name=product["name"], quantity=qty, transport_mode=mode,
+                        notes=request.form.get("notes", "").strip())
+        flash("Order placed. X-PPF will assign film and confirm dispatch.", "success")
         return redirect(url_for("my_orders"))
-    return render_template("order.html", product=product)
+    return render_template("order.html", product=product, options=options, user=user)
 
 
 @app.route("/my/orders")
@@ -332,7 +395,8 @@ def studio_profile():
     if request.method == "POST":
         logo = _save_one("logo")
         db.update_studio_profile(session["user_id"],
-                                 request.form.get("studio_name", "").strip(), logo)
+                                 request.form.get("studio_name", "").strip(), logo,
+                                 city=request.form.get("city", "").strip() or None)
         flash("Studio profile updated.", "success")
         return redirect(url_for("studio_profile"))
     return render_template("studio_profile.html", user=user)
@@ -381,10 +445,22 @@ def admin_users():
                 password=password, role=role,
                 studio_name=request.form.get("studio_name", "").strip() or None,
                 studio_logo=logo,
+                city=request.form.get("city", "").strip() or None,
+                verified=1 if request.form.get("verified") else 0,
             )
             flash(f"Account created for {email} ({role}).", "success")
         return redirect(url_for("admin_users"))
     return render_template("admin_users.html", users=db.list_users())
+
+
+@app.route("/admin/user/<int:user_id>/verify", methods=["POST"])
+@admin_required
+def admin_user_verify(user_id):
+    u = db.get_user(user_id)
+    if u:
+        db.set_user_verified(user_id, 0 if u["verified"] else 1)
+        flash(f"{u['studio_name'] or u['name']} marked {'unverified' if u['verified'] else 'verified'}.", "success")
+    return redirect(url_for("admin_users"))
 
 
 @app.route("/admin/warranties")
@@ -416,7 +492,49 @@ def admin_reject(warranty_id):
 @app.route("/admin/orders")
 @admin_required
 def admin_orders():
-    return render_template("admin_orders.html", orders=db.list_orders())
+    orders = db.list_orders()
+    # available rolls (admin's own stock) keyed by warranty term, for the assign dropdown
+    avail = {}
+    for o in orders:
+        yrs = o["product_warranty_years"]
+        if yrs not in avail:
+            avail[yrs] = db.available_rolls(session["user_id"], yrs)
+    return render_template("admin_orders.html", orders=orders, avail=avail)
+
+
+@app.route("/admin/order/new", methods=["GET", "POST"])
+@admin_required
+def admin_order_new():
+    studios = [u for u in db.list_users() if u["role"] == "studio"]
+    if request.method == "POST":
+        studio = db.get_user(int(request.form["studio_id"])) if request.form.get("studio_id") else None
+        product = db.get_product(int(request.form["product_id"])) if request.form.get("product_id") else None
+        if not studio or not product:
+            flash("Pick a studio and a product.", "error")
+            return render_template("admin_order_new.html", studios=studios, products=db.list_products())
+        try:
+            qty = max(1, int(request.form.get("quantity") or 1))
+        except ValueError:
+            qty = 1
+        mode = request.form.get("transport_mode", "").strip() or transport_options(studio["city"])[0]
+        db.create_order(user_id=studio["id"], product_id=product["id"], product_name=product["name"],
+                        quantity=qty, transport_mode=mode,
+                        notes=request.form.get("notes", "").strip())
+        flash(f"Order placed for {studio['studio_name'] or studio['name']}.", "success")
+        return redirect(url_for("admin_orders"))
+    return render_template("admin_order_new.html", studios=studios, products=db.list_products())
+
+
+@app.route("/admin/order/<int:order_id>/assign-roll", methods=["POST"])
+@admin_required
+def admin_assign_roll(order_id):
+    roll_pk = request.form.get("roll_pk")
+    o = db.get_order(order_id)
+    if roll_pk and o:
+        ok = db.assign_roll_to_order(int(roll_pk), order_id, o["studio_name"] or o["customer_name"])
+        flash("Roll assigned to the order." if ok else "That roll is no longer available.",
+              "success" if ok else "error")
+    return redirect(url_for("admin_orders"))
 
 
 @app.route("/admin/order/<int:order_id>/status", methods=["POST"])
@@ -448,6 +566,7 @@ def admin_claim_status(claim_id):
 @admin_required
 def admin_products():
     if request.method == "POST":
+        img = _save_one("image")
         db.create_product(
             name=request.form.get("name", "").strip(),
             category=request.form.get("category", "PPF").strip(),
@@ -455,6 +574,7 @@ def admin_products():
             description=request.form.get("description", "").strip(),
             price=float(request.form.get("price") or 0),
             warranty_years=int(request.form.get("warranty_years") or 8),
+            image=("uploads/" + img) if img else None,
         )
         flash("Product added.", "success")
         return redirect(url_for("admin_products"))
@@ -496,12 +616,39 @@ def inventory():
                            products=db.list_products())
 
 
-@app.route("/admin/inventory")
+@app.route("/admin/inventory", methods=["GET", "POST"])
 @admin_required
 def admin_inventory():
+    if request.method == "POST":
+        product = db.get_product(int(request.form["product_id"])) if request.form.get("product_id") else None
+        years = product["warranty_years"] if product else (
+            int(request.form["warranty_years"]) if request.form.get("warranty_years") else None)
+        length = request.form.get("length_m", "").strip()
+        _id, err = db.add_roll(
+            owner_id=session["user_id"], roll_id=request.form.get("roll_id", ""),
+            product_name=product["name"] if product else (request.form.get("product_name", "").strip() or None),
+            warranty_years=years, length_m=float(length) if length else None,
+            note=request.form.get("note", "").strip() or None,
+        )
+        flash(err or "Roll added to inventory.", "error" if err else "success")
+        return redirect(url_for("admin_inventory"))
     return render_template("admin_inventory.html",
                            rolls=db.list_inventory(),
-                           counts=db.inventory_counts())
+                           my_rolls=db.list_inventory(owner_id=session["user_id"]),
+                           counts=db.inventory_counts(),
+                           products=db.list_products())
+
+
+@app.route("/admin/inventory/auto-assign", methods=["POST"])
+@admin_required
+def admin_auto_assign():
+    assigned = db.auto_assign_orders(session["user_id"])
+    if assigned:
+        flash(f"Auto-assign agent matched {len(assigned)} order(s): " +
+              ", ".join(f"#{o} → {r}" for o, _s, r in assigned), "success")
+    else:
+        flash("Auto-assign agent found no verified orders with a matching in-stock roll.", "info")
+    return redirect(request.referrer or url_for("admin_orders"))
 
 
 @app.route("/uploads/<path:filename>")
@@ -521,5 +668,5 @@ def not_found(e):
 
 
 if __name__ == "__main__":
-    db.init_db()
-    app.run(host="127.0.0.1", port=5055, debug=True)
+    debug = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(host="127.0.0.1", port=5055, debug=debug)

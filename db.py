@@ -21,7 +21,8 @@ import hashlib
 import hmac
 from datetime import datetime, timedelta
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "xppf.db")
+DB_PATH = os.environ.get("XPPF_DB_PATH") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "xppf.db")
 
 # Parts grouped for an organised coverage picker. "Full Body" is a master
 # toggle in the UI (selects all) — it is not itself a stored part.
@@ -75,6 +76,8 @@ CREATE TABLE IF NOT EXISTS users (
     role          TEXT NOT NULL DEFAULT 'studio',      -- 'admin' | 'studio'
     studio_name   TEXT,
     studio_logo   TEXT,
+    city          TEXT,
+    verified      INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT NOT NULL
 );
 
@@ -86,6 +89,7 @@ CREATE TABLE IF NOT EXISTS products (
     description    TEXT,
     price          REAL,
     warranty_years INTEGER DEFAULT 8,
+    image          TEXT,
     active         INTEGER DEFAULT 1,
     created_at     TEXT NOT NULL
 );
@@ -95,6 +99,9 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id       INTEGER NOT NULL,
     product_id    INTEGER,
     product_name  TEXT,
+    quantity      INTEGER DEFAULT 1,
+    transport_mode TEXT,
+    assigned_roll TEXT,
     vehicle_ymm   TEXT,
     vehicle_color TEXT,
     vin           TEXT,
@@ -174,10 +181,12 @@ CREATE TABLE IF NOT EXISTS inventory (
     owner_id      INTEGER NOT NULL,                 -- studio (or admin) that owns the roll
     roll_id       TEXT NOT NULL,                    -- scanned / entered roll code
     product_name  TEXT,
+    warranty_years INTEGER,                         -- term this roll is rated for
     length_m      REAL,                             -- metres of film on the roll (optional)
     status        TEXT NOT NULL DEFAULT 'in_stock', -- in_stock | assigned | depleted
     warranty_id   INTEGER,                          -- warranty it was assigned to
-    customer_name TEXT,                             -- end client it was assigned to
+    order_id      INTEGER,                          -- work order it was assigned to
+    customer_name TEXT,                             -- end client / studio it was assigned to
     note          TEXT,
     created_at    TEXT NOT NULL,
     assigned_at   TEXT,
@@ -193,11 +202,29 @@ def _migrate(conn):
     def cols(table):
         return {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
     user_cols = cols("users")
-    for col in ("studio_name", "studio_logo"):
+    for col in ("studio_name", "studio_logo", "city"):
         if col not in user_cols:
             conn.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
+    if "verified" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN verified INTEGER NOT NULL DEFAULT 0")
     if "brand_choice" not in cols("warranties"):
         conn.execute("ALTER TABLE warranties ADD COLUMN brand_choice TEXT NOT NULL DEFAULT 'xppf'")
+    if "image" not in cols("products"):
+        conn.execute("ALTER TABLE products ADD COLUMN image TEXT")
+    order_cols = cols("orders")
+    if "quantity" not in order_cols:
+        conn.execute("ALTER TABLE orders ADD COLUMN quantity INTEGER DEFAULT 1")
+    if "transport_mode" not in order_cols:
+        conn.execute("ALTER TABLE orders ADD COLUMN transport_mode TEXT")
+    if "assigned_roll" not in order_cols:
+        conn.execute("ALTER TABLE orders ADD COLUMN assigned_roll TEXT")
+    inv_cols = cols("inventory") if conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='inventory'").fetchone() else set()
+    if inv_cols:
+        if "warranty_years" not in inv_cols:
+            conn.execute("ALTER TABLE inventory ADD COLUMN warranty_years INTEGER")
+        if "order_id" not in inv_cols:
+            conn.execute("ALTER TABLE inventory ADD COLUMN order_id INTEGER")
     conn.commit()
 
 
@@ -216,40 +243,42 @@ def _seed(conn):
     now = datetime.utcnow().isoformat()
 
     if conn.execute("SELECT COUNT(*) c FROM users WHERE role='admin'").fetchone()["c"] == 0:
+        admin_email = (os.environ.get("XPPF_ADMIN_EMAIL") or "admin@xppf.com").strip().lower()
+        admin_pw = os.environ.get("XPPF_ADMIN_PASSWORD") or "xppf-admin"
         conn.execute(
             "INSERT INTO users (name, email, phone, password_hash, role, studio_name, created_at) "
             "VALUES (?, ?, ?, ?, 'admin', ?, ?)",
-            ("X-PPF Admin", "admin@xppf.com", "+1 000 000 0000",
-             hash_password("xppf-admin"), "X-Paint Protection Film", now),
+            ("X-PPF Admin", admin_email, "+1 000 000 0000",
+             hash_password(admin_pw), "X-Paint Protection Film", now),
         )
 
     if conn.execute("SELECT COUNT(*) c FROM users WHERE role='studio'").fetchone()["c"] == 0:
         conn.execute(
-            "INSERT INTO users (name, email, phone, password_hash, role, studio_name, created_at) "
-            "VALUES (?, ?, ?, ?, 'studio', ?, ?)",
+            "INSERT INTO users (name, email, phone, password_hash, role, studio_name, city, verified, created_at) "
+            "VALUES (?, ?, ?, ?, 'studio', ?, ?, 1, ?)",
             ("Vivek Reddy", "studio@example.com", "+1 555 000 0000",
-             hash_password("studio"), "Apex Auto Studio", now),
+             hash_password("studio"), "Apex Auto Studio", "Hyderabad", now),
         )
 
     if conn.execute("SELECT COUNT(*) c FROM products").fetchone()["c"] == 0:
         products = [
-            ("X-PPF Lite 8", "PPF", "8-Year Paint Protection Film",
-             "Self-healing TPU film with a hydrophobic top coat. Guards against rock chips, "
-             "swirls and stains, backed by an 8-year warranty.", 175000, 8),
-            ("X-PPF Pro 10", "PPF", "10-Year Premium PPF",
-             "Flagship film — superior gloss, stain resistance and a 10-year warranty for "
-             "full-body coverage.", 280000, 10),
-            ("X-PPF Matte", "PPF", "Matte-Finish PPF",
-             "Converts gloss paint to a satin matte finish while protecting it. 8-year warranty.",
-             220000, 8),
+            ("X-PPF Lite", "PPF", "5-Year Paint Protection Film",
+             "Self-healing TPU film with a hydrophobic top coat. Everyday protection against rock "
+             "chips, swirls and stains, backed by a 5-year warranty.", 95000, 5, "img/cat-5yr.jpg"),
+            ("X-PPF Plus", "PPF", "7-Year Paint Protection Film",
+             "Thicker self-healing film with enhanced gloss and stain resistance — a 7-year "
+             "warranty for daily-driven and weekend cars alike.", 175000, 7, "img/cat-7yr.jpg"),
+            ("X-PPF Pro", "PPF", "10-Year Premium PPF",
+             "Flagship aliphatic-TPU film — maximum clarity, gloss and durability for full-body "
+             "coverage, backed by a 10-year warranty.", 280000, 10, "img/cat-10yr.jpg"),
             ("X-PPF Ceramic", "Ceramic Coating", "9H Ceramic Coating",
              "Multi-layer 9H ceramic coating for deep gloss and effortless maintenance. "
-             "5-year warranty.", 35000, 5),
+             "5-year warranty.", 35000, 5, "img/cat-ceramic.jpg"),
         ]
         for p in products:
             conn.execute(
                 "INSERT INTO products (name, category, tagline, description, price, "
-                "warranty_years, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)",
+                "warranty_years, image, active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)",
                 (*p, now),
             )
     conn.commit()
@@ -282,14 +311,16 @@ def list_users():
         conn.close()
 
 
-def create_user(name, email, phone, password, role="studio", studio_name=None, studio_logo=None):
+def create_user(name, email, phone, password, role="studio", studio_name=None,
+                studio_logo=None, city=None, verified=0):
     conn = get_conn()
     try:
         cur = conn.execute(
             "INSERT INTO users (name, email, phone, password_hash, role, studio_name, "
-            "studio_logo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "studio_logo, city, verified, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (name, email.strip().lower(), phone, hash_password(password), role,
-             studio_name, studio_logo, datetime.utcnow().isoformat()),
+             studio_name, studio_logo, city, 1 if verified else 0,
+             datetime.utcnow().isoformat()),
         )
         conn.commit()
         return cur.lastrowid
@@ -297,14 +328,24 @@ def create_user(name, email, phone, password, role="studio", studio_name=None, s
         conn.close()
 
 
-def update_studio_profile(user_id, studio_name, studio_logo=None):
+def set_user_verified(user_id, verified):
+    conn = get_conn()
+    try:
+        conn.execute("UPDATE users SET verified = ? WHERE id = ?", (1 if verified else 0, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def update_studio_profile(user_id, studio_name, studio_logo=None, city=None):
     conn = get_conn()
     try:
         if studio_logo:
-            conn.execute("UPDATE users SET studio_name = ?, studio_logo = ? WHERE id = ?",
-                         (studio_name, studio_logo, user_id))
+            conn.execute("UPDATE users SET studio_name=?, city=?, studio_logo=? WHERE id=?",
+                         (studio_name, city, studio_logo, user_id))
         else:
-            conn.execute("UPDATE users SET studio_name = ? WHERE id = ?", (studio_name, user_id))
+            conn.execute("UPDATE users SET studio_name=?, city=? WHERE id=?",
+                         (studio_name, city, user_id))
         conn.commit()
     finally:
         conn.close()
@@ -333,13 +374,13 @@ def get_product(product_id):
         conn.close()
 
 
-def create_product(name, category, tagline, description, price, warranty_years):
+def create_product(name, category, tagline, description, price, warranty_years, image=None):
     conn = get_conn()
     try:
         cur = conn.execute(
             "INSERT INTO products (name, category, tagline, description, price, "
-            "warranty_years, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)",
-            (name, category, tagline, description, price, warranty_years,
+            "warranty_years, image, active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)",
+            (name, category, tagline, description, price, warranty_years, image,
              datetime.utcnow().isoformat()),
         )
         conn.commit()
@@ -360,13 +401,13 @@ def set_product_active(product_id, active):
 # --------------------------------------------------------------------------- #
 # Orders
 # --------------------------------------------------------------------------- #
-def create_order(user_id, product_id, product_name, vehicle_ymm, vehicle_color, vin, notes):
+def create_order(user_id, product_id, product_name, quantity, transport_mode, notes=""):
     conn = get_conn()
     try:
         cur = conn.execute(
-            "INSERT INTO orders (user_id, product_id, product_name, vehicle_ymm, vehicle_color, "
-            "vin, notes, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'received', ?)",
-            (user_id, product_id, product_name, vehicle_ymm, vehicle_color, vin, notes,
+            "INSERT INTO orders (user_id, product_id, product_name, quantity, transport_mode, "
+            "notes, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'received', ?)",
+            (user_id, product_id, product_name, quantity, transport_mode, notes,
              datetime.utcnow().isoformat()),
         )
         conn.commit()
@@ -379,12 +420,26 @@ def list_orders(user_id=None):
     conn = get_conn()
     try:
         base = ("SELECT o.*, u.name AS customer_name, u.email AS customer_email, "
-                "u.phone AS customer_phone, u.studio_name AS studio_name "
-                "FROM orders o JOIN users u ON u.id = o.user_id ")
+                "u.phone AS customer_phone, u.studio_name AS studio_name, u.city AS studio_city, "
+                "u.verified AS studio_verified, p.warranty_years AS product_warranty_years "
+                "FROM orders o JOIN users u ON u.id = o.user_id "
+                "LEFT JOIN products p ON p.id = o.product_id ")
         if user_id:
             return conn.execute(base + "WHERE o.user_id = ? ORDER BY o.created_at DESC",
                                 (user_id,)).fetchall()
         return conn.execute(base + "ORDER BY o.created_at DESC").fetchall()
+    finally:
+        conn.close()
+
+
+def get_order(order_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT o.*, u.studio_name AS studio_name, u.name AS customer_name, "
+            "u.verified AS studio_verified, p.warranty_years AS product_warranty_years "
+            "FROM orders o JOIN users u ON u.id = o.user_id "
+            "LEFT JOIN products p ON p.id = o.product_id WHERE o.id = ?", (order_id,)).fetchone()
     finally:
         conn.close()
 
@@ -564,7 +619,7 @@ def update_claim_status(claim_id, status, admin_note=""):
 # --------------------------------------------------------------------------- #
 # Inventory (film rolls)
 # --------------------------------------------------------------------------- #
-def add_roll(owner_id, roll_id, product_name=None, length_m=None, note=None):
+def add_roll(owner_id, roll_id, product_name=None, warranty_years=None, length_m=None, note=None):
     """Add a roll to an owner's inventory. Returns (id, error_message)."""
     roll_id = (roll_id or "").strip()
     if not roll_id:
@@ -575,12 +630,80 @@ def add_roll(owner_id, roll_id, product_name=None, length_m=None, note=None):
                         (owner_id, roll_id)).fetchone():
             return None, f"Roll {roll_id} is already in your inventory."
         cur = conn.execute(
-            "INSERT INTO inventory (owner_id, roll_id, product_name, length_m, status, note, created_at) "
-            "VALUES (?, ?, ?, ?, 'in_stock', ?, ?)",
-            (owner_id, roll_id, product_name, length_m, note, datetime.utcnow().isoformat()),
+            "INSERT INTO inventory (owner_id, roll_id, product_name, warranty_years, length_m, "
+            "status, note, created_at) VALUES (?, ?, ?, ?, ?, 'in_stock', ?, ?)",
+            (owner_id, roll_id, product_name, warranty_years, length_m, note,
+             datetime.utcnow().isoformat()),
         )
         conn.commit()
         return cur.lastrowid, None
+    finally:
+        conn.close()
+
+
+def available_rolls(owner_id, warranty_years=None):
+    """In-stock rolls for an owner, optionally filtered to a warranty term."""
+    conn = get_conn()
+    try:
+        q = "SELECT * FROM inventory WHERE owner_id=? AND status='in_stock'"
+        p = [owner_id]
+        if warranty_years is not None:
+            q += " AND warranty_years=?"; p.append(warranty_years)
+        q += " ORDER BY roll_id"
+        return conn.execute(q, p).fetchall()
+    finally:
+        conn.close()
+
+
+def assign_roll_to_order(roll_pk, order_id, studio_name):
+    conn = get_conn()
+    try:
+        roll = conn.execute("SELECT * FROM inventory WHERE id=? AND status='in_stock'",
+                            (roll_pk,)).fetchone()
+        if not roll:
+            return False
+        conn.execute(
+            "UPDATE inventory SET status='assigned', order_id=?, customer_name=?, assigned_at=? WHERE id=?",
+            (order_id, studio_name, datetime.utcnow().isoformat(), roll_pk))
+        conn.execute("UPDATE orders SET assigned_roll=? WHERE id=?", (roll["roll_id"], order_id))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def auto_assign_orders(owner_id):
+    """
+    Auto-assignment agent: for every open work order placed by a *verified* studio
+    that has no roll yet, pick an in-stock roll matching the ordered warranty term
+    and assign it. Returns a list of (order_id, studio, roll_id) tuples assigned.
+    """
+    conn = get_conn()
+    assigned = []
+    try:
+        orders = conn.execute(
+            "SELECT o.id, o.user_id, u.studio_name, u.name, u.verified, p.warranty_years AS yrs "
+            "FROM orders o JOIN users u ON u.id=o.user_id "
+            "LEFT JOIN products p ON p.id=o.product_id "
+            "WHERE o.status NOT IN ('completed','cancelled') "
+            "AND (o.assigned_roll IS NULL OR o.assigned_roll='') "
+            "ORDER BY o.created_at").fetchall()
+        for o in orders:
+            if not o["verified"]:
+                continue
+            roll = conn.execute(
+                "SELECT * FROM inventory WHERE owner_id=? AND status='in_stock' AND "
+                "(warranty_years=? OR ? IS NULL) ORDER BY warranty_years IS NULL, roll_id LIMIT 1",
+                (owner_id, o["yrs"], o["yrs"])).fetchone()
+            if not roll:
+                continue
+            conn.execute(
+                "UPDATE inventory SET status='assigned', order_id=?, customer_name=?, assigned_at=? WHERE id=?",
+                (o["id"], o["studio_name"] or o["name"], datetime.utcnow().isoformat(), roll["id"]))
+            conn.execute("UPDATE orders SET assigned_roll=? WHERE id=?", (roll["roll_id"], o["id"]))
+            assigned.append((o["id"], o["studio_name"] or o["name"], roll["roll_id"]))
+        conn.commit()
+        return assigned
     finally:
         conn.close()
 

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Offline — X-PPF{% endblock %}
+{% block content %}
+<section class="container narrow page center">
+  <img src="{{ url_for('static', filename='img/xppf-logo.svg') }}" alt="X-PPF" style="width:56px;height:56px">
+  <h1 style="font-size:var(--fs-xl);margin-top:var(--s4)">You're offline</h1>
+  <p class="secondary" style="margin:var(--s3) 0">This page needs a connection. Pages you've already
+    opened still work offline — check your warranties or products.</p>
+  <a href="{{ url_for('index') }}" class="btn btn-ghost btn-sm">Try home</a>
+</section>
+{% endblock %}

@@ -1,20 +1,38 @@
 {% extends "base.html" %}
 {% block title %}Products — X-PPF{% endblock %}
 {% block content %}
-<section class="container page">
-  <div class="page-head">
-    <p class="eyebrow reveal">Catalog</p>
-    <h1 class="reveal">Paint protection & coatings</h1>
-  </div>
+<!-- Detailing craftsmanship video band -->
+<div class="vband">
+  <video autoplay muted loop playsinline preload="metadata"
+         poster="{{ url_for('static', filename='img/cat-matte.jpg') }}">
+    <source src="{{ url_for('static', filename='video/products.mp4') }}" type="video/mp4">
+  </video>
+  <div class="scrim"></div>
+  <div class="container"><div class="vb-inner">
+    <p class="eyebrow">Catalog</p>
+    <h2>Paint protection &amp; coatings</h2>
+    <p>Engineered films and 9H ceramic coatings, installed by authorised studios.</p>
+  </div></div>
+</div>
+
+<section class="container" style="padding-bottom:var(--s16)">
   <div class="grid g3">
     {% for p in products %}
     <div class="card lift product reveal">
+      <div class="product-media">
+        <img src="{{ url_for('static', filename=prod_img(p)) }}" alt="{{ p['name'] }}">
+      </div>
       <span class="cat">{{ p['category'] }}</span>
       <h3>{{ p['name'] }}</h3>
       <p class="desc">{{ p['description'] }}</p>
-      <div class="price">{{ p['price']|inr }} <small>from</small></div>
-      <div class="wtag">{{ p['warranty_years'] }}-year warranty</div>
-      <a href="{{ url_for('order', product_id=p['id']) }}" class="btn btn-primary btn-block btn-sm" style="margin-top:var(--s5)">Order</a>
+      {% if current_user %}
+        <div class="price">{{ p['price']|inr }} <small>from</small></div>
+        <div class="wtag">{{ p['warranty_years'] }}-year warranty</div>
+        <a href="{{ url_for('order', product_id=p['id']) }}" class="btn btn-primary btn-block btn-sm" style="margin-top:var(--s5)">Order</a>
+      {% else %}
+        <div class="wtag">{{ p['warranty_years'] }}-year warranty</div>
+        <a href="{{ url_for('login') }}" class="btn btn-line btn-block btn-sm" style="margin-top:var(--s5)">Sign in for pricing</a>
+      {% endif %}
     </div>
     {% endfor %}
   </div>

@@ -7,6 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="{{ url_for('static', filename='img/xppf-logo.svg') }}">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#08090b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="X-PPF">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='pwa/apple-touch-icon.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
@@ -17,7 +24,10 @@
         <img src="{{ url_for('static', filename='img/xppf-logo.svg') }}" alt="X-PPF">
         <span class="bt"><b>X</b>-PPF</span>
       </a>
-      <div class="nav-links">
+      <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
         <a href="{{ url_for('products') }}">Products</a>
         <a href="{{ url_for('about') }}">About</a>
         {% if current_user %}
@@ -58,7 +68,10 @@
   <footer class="site no-print">
     <div class="container row between">
       <span>© {{ year }} {{ brand.name }}</span>
-      <span>{{ brand.email }} · {{ brand.phone }}</span>
+      <span class="row" style="gap:var(--s4)">
+        <button id="installBtn" onclick="xppfInstall()" style="display:none" class="btn btn-line btn-sm">Install app</button>
+        <span>{{ brand.email }} · {{ brand.phone }}</span>
+      </span>
     </div>
   </footer>
 
@@ -77,6 +90,34 @@
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <script>
+    // PWA: register service worker + capture install prompt
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });
+    }
+    var deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault(); deferredPrompt = e;
+      var b = document.getElementById('installBtn'); if(b) b.style.display = 'inline-flex';
+    });
+    function xppfInstall(){
+      if(!deferredPrompt) return;
+      deferredPrompt.prompt(); deferredPrompt = null;
+      var b = document.getElementById('installBtn'); if(b) b.style.display = 'none';
+    }
+    window.addEventListener('appinstalled', function(){ var b=document.getElementById('installBtn'); if(b) b.style.display='none'; });
+
+    // Mobile nav toggle
+    (function(){
+      var t=document.getElementById('navToggle'), l=document.getElementById('navLinks');
+      if(!t||!l) return;
+      t.addEventListener('click', function(){
+        var open=l.classList.toggle('open');
+        t.classList.toggle('open', open);
+        t.setAttribute('aria-expanded', open?'true':'false');
+      });
+      l.addEventListener('click', function(e){ if(e.target.tagName==='A'){ l.classList.remove('open'); t.classList.remove('open'); } });
+    })();
+
     // Scroll reveal
     (function(){
       var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

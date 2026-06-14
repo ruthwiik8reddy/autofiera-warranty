@@ -23,6 +23,11 @@
               <p class="hint">At least {{ min_pw }} characters.</p></div>
           </div>
           <div class="field"><label>Studio name</label><input type="text" name="studio_name" placeholder="For studio accounts"></div>
+          <div class="frow">
+            <div class="field"><label>City</label><input type="text" name="city" placeholder="Hyderabad"></div>
+            <div class="field"><label>Verified</label>
+              <label class="row" style="gap:var(--s2);font-size:var(--fs-base)"><input type="checkbox" name="verified" style="width:auto"> Mark studio as verified</label></div>
+          </div>
           <div class="field"><label>Studio logo</label><input type="file" name="logo" accept="image/*">
             <p class="hint">Optional — studios can also upload this themselves later.</p></div>
           <button class="btn btn-primary btn-block btn-lg" type="submit">Create account</button>
@@ -37,10 +42,17 @@
         <div class="card row between">
           <div class="row" style="gap:var(--s3)">
             {% if u['studio_logo'] %}<img class="logo-preview" style="width:44px;height:44px" src="{{ url_for('uploads', filename=u['studio_logo']) }}" alt="">{% endif %}
-            <div><b>{{ u['name'] }}</b>{% if u['studio_name'] %} <span class="muted">· {{ u['studio_name'] }}</span>{% endif %}<br>
+            <div><b>{{ u['name'] }}</b>{% if u['studio_name'] %} <span class="muted">· {{ u['studio_name'] }}</span>{% endif %}{% if u['city'] %} <span class="muted">· {{ u['city'] }}</span>{% endif %}<br>
               <span class="muted">{{ u['email'] }}</span></div>
           </div>
-          <span class="badge {{ 'b-approved' if u['role']=='admin' else 'b-received' }}">{{ u['role'] }}</span>
+          <div class="row" style="gap:var(--s2)">
+            <span class="badge {{ 'b-approved' if u['role']=='admin' else 'b-received' }}">{{ u['role'] }}</span>
+            {% if u['role']=='studio' %}
+              {% if u['verified'] %}<span class="badge b-approved">verified</span>{% else %}<span class="badge b-pending">unverified</span>{% endif %}
+              <form method="POST" action="{{ url_for('admin_user_verify', user_id=u['id']) }}">
+                <button class="btn btn-ghost btn-sm" type="submit">{{ 'Unverify' if u['verified'] else 'Verify' }}</button></form>
+            {% endif %}
+          </div>
         </div>
         {% endfor %}
       </div>

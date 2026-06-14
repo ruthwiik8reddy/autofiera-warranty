@@ -1,9 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Inventory Ledger — X-PPF Admin{% endblock %}
+{% block title %}Inventory — X-PPF Admin{% endblock %}
 {% block content %}
 <section class="container page">
-  <div class="page-head"><p class="eyebrow">Admin</p><h1>Roll ledger</h1>
-    <p class="secondary">Every roll across all studios, with the client it was assigned to — your audit trail for verification.</p></div>
+  <div class="page-head row between">
+    <div><p class="eyebrow">Admin</p><h1>Roll inventory</h1>
+      <p class="secondary">Scan rolls into stock, then assign them to incoming work orders — manually or with the agent.</p></div>
+    <form method="POST" action="{{ url_for('admin_auto_assign') }}"><button class="btn btn-primary btn-sm" type="submit">⚡ Auto-assign agent</button></form>
+  </div>
 
   <div class="grid g3" style="margin-bottom:var(--s10)">
     <div class="kpi"><div class="num">{{ counts['in_stock'] }}</div><div class="label">In stock</div></div>
@@ -11,18 +14,57 @@
     <div class="kpi"><div class="num">{{ counts['total'] }}</div><div class="label">Total rolls</div></div>
   </div>
 
+  <div class="grid g2">
+    <div>
+      <h2 style="margin-bottom:var(--s4)">Scan a roll into stock</h2>
+      <div class="card">
+        <form method="POST">
+          <div class="field"><label>Roll ID <span class="req">*</span></label>
+            <div class="scan-row">
+              <input type="text" id="inv_roll" name="roll_id" required class="mono" placeholder="XP-LITE8-23A4471">
+              <button type="button" class="btn-scan" onclick="openScanner('inv_roll')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M3 12h18"/></svg>
+                Scan
+              </button>
+            </div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Product (sets warranty term) <span class="req">*</span></label>
+              <select name="product_id" required><option value="">Select product</option>
+                {% for p in products %}<option value="{{ p['id'] }}">{{ p['name'] }} · {{ p['warranty_years'] }}yr</option>{% endfor %}</select></div>
+            <div class="field"><label>Length (m)</label><input type="number" name="length_m" step="any" placeholder="30"></div>
+          </div>
+          <div class="field"><label>Note</label><input type="text" name="note" placeholder="Optional"></div>
+          <button class="btn btn-primary btn-block btn-lg" type="submit">Add to stock</button>
+        </form>
+      </div>
+    </div>
+
+    <div>
+      <h2 style="margin-bottom:var(--s4)">My stock</h2>
+      {% if my_rolls %}
+      <div class="tw"><table>
+        <thead><tr><th>Roll ID</th><th>Term</th><th>Status</th><th>Assigned</th></tr></thead>
+        <tbody>{% for r in my_rolls %}
+          <tr><td class="mono">{{ r['roll_id'] }}</td>
+            <td>{{ (r['warranty_years']|string + ' yr') if r['warranty_years'] else '—' }}</td>
+            <td><span class="badge b-{{ r['status'] }}">{{ r['status'].replace('_',' ') }}</span></td>
+            <td>{% if r['customer_name'] %}{{ r['customer_name'] }}{% if r['order_id'] %} · order #{{ r['order_id'] }}{% endif %}{% else %}<span class="muted">—</span>{% endif %}</td></tr>
+        {% endfor %}</tbody></table></div>
+      {% else %}<div class="card center"><p class="muted">No rolls in stock. Scan one in.</p></div>{% endif %}
+    </div>
+  </div>
+
+  <h2 style="margin:var(--s12) 0 var(--s4)">Full ledger — all studios</h2>
   {% if rolls %}
   <div class="tw"><table>
-    <thead><tr><th>Roll ID</th><th>Studio</th><th>Product</th><th>Status</th><th>Assigned client</th><th>Assigned</th></tr></thead>
+    <thead><tr><th>Roll ID</th><th>Owner</th><th>Term</th><th>Status</th><th>Assigned to</th><th>When</th></tr></thead>
     <tbody>{% for r in rolls %}
-      <tr>
-        <td class="mono">{{ r['roll_id'] }}</td>
-        <td>{{ r['owner_studio'] or r['owner_name'] }}</td>
-        <td class="secondary">{{ r['product_name'] or '—' }}</td>
+      <tr><td class="mono">{{ r['roll_id'] }}</td><td>{{ r['owner_studio'] or r['owner_name'] }}</td>
+        <td>{{ (r['warranty_years']|string + ' yr') if r['warranty_years'] else '—' }}</td>
         <td><span class="badge b-{{ r['status'] }}">{{ r['status'].replace('_',' ') }}</span></td>
-        <td>{% if r['customer_name'] %}{{ r['customer_name'] }}{% if r['warranty_id'] %} · <a class="link-arrow" href="{{ url_for('warranty_view', warranty_id=r['warranty_id']) }}">cert ›</a>{% endif %}{% else %}<span class="muted">—</span>{% endif %}</td>
-        <td class="muted mono">{{ r['assigned_at'][:10] if r['assigned_at'] else '—' }}</td>
-      </tr>
+        <td>{% if r['customer_name'] %}{{ r['customer_name'] }}{% if r['order_id'] %} · order #{{ r['order_id'] }}{% elif r['warranty_id'] %} · <a class="link-arrow" href="{{ url_for('warranty_view', warranty_id=r['warranty_id']) }}">cert ›</a>{% endif %}{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td class="muted mono">{{ r['assigned_at'][:10] if r['assigned_at'] else '—' }}</td></tr>
     {% endfor %}</tbody></table></div>
   {% else %}<div class="card center"><p class="muted">No rolls recorded yet.</p></div>{% endif %}
 </section>

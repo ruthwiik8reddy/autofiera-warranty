@@ -1,90 +1,46 @@
 {% extends "base.html" %}
 {% block title %}X-Paint Protection Film{% endblock %}
 {% block content %}
-<section class="hero container">
-  <p class="eyebrow reveal">X-Paint Protection Film</p>
-  <h1 class="reveal">A finish that defends itself.</h1>
-  <p class="sub reveal">Self-healing film and ceramic coatings, issued with a verified digital
-    warranty your clients can trust.</p>
-  <div class="row reveal" style="justify-content:center">
-    <a href="{{ url_for('products') }}" class="btn btn-primary btn-lg">Explore products</a>
-    <a href="{{ url_for('about') }}" class="link-arrow">How it works ›</a>
+
+<!-- Full-screen scroll-scrubbed film showcase -->
+<section class="scrub" id="scrub">
+  <canvas id="scrubCanvas"></canvas>
+  <div class="scrub-grad scrub-grad-top"></div>
+  <div class="scrub-grad scrub-grad-bot"></div>
+
+  <div class="scrub-head">
+    <p class="scrub-eyebrow">X-Paint Protection Film</p>
+    <h2 class="scrub-h">Engineered in layers.</h2>
   </div>
-  <p class="install-hint reveal">Scroll to watch the film go on ↓</p>
-</section>
 
-<!-- Scroll-scrubbed PPF installation -->
-<section class="install" id="install">
-  <div class="install-stage">
-    <div class="install-inner">
-      <p class="install-eyebrow">PPF installation</p>
-      <h2 class="install-step" id="installStep">Bare paint</h2>
+  <div class="callout" id="co0"><span class="co-dot"></span><span class="co-tx"><span class="co-v" data-v="0">0</span><span class="co-l"></span></span></div>
+  <div class="callout" id="co1"><span class="co-dot"></span><span class="co-tx"><span class="co-v" data-v="0">0</span><span class="co-l"></span></span></div>
+  <div class="callout" id="co2"><span class="co-dot"></span><span class="co-tx"><span class="co-v" data-v="0">0</span><span class="co-l"></span></span></div>
 
-      <div class="car-wrap" id="carWrap">
-        <!-- Bare / dull paint -->
-        <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M70 250 C70 220 92 211 126 209 L214 206 C242 150 280 124 348 120 L486 120
-                   C560 122 602 150 632 200 L724 212 C752 217 766 230 766 252 L766 258
-                   C766 272 754 280 736 280 L104 280 C84 280 70 268 70 254 Z"
-                fill="#cfd2d7"/>
-          <path d="M306 150 L470 148 C512 150 536 168 556 198 L322 200 C310 178 306 164 306 150 Z"
-                fill="#b3b8c0"/>
-          <circle cx="236" cy="282" r="46" fill="#26262a"/><circle cx="236" cy="282" r="20" fill="#3c3c42"/>
-          <circle cx="610" cy="282" r="46" fill="#26262a"/><circle cx="610" cy="282" r="20" fill="#3c3c42"/>
-        </svg>
-
-        <!-- Protected / glossy (revealed left→right by scroll) -->
-        <div class="car-protected" id="carProtected">
-          <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <defs>
-              <linearGradient id="gloss-body" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#eef3fb"/><stop offset="0.42" stop-color="#c4cfde"/>
-                <stop offset="1" stop-color="#9aa7ba"/>
-              </linearGradient>
-              <linearGradient id="gloss-glass" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#dfe9f6"/><stop offset="1" stop-color="#8fa6c0"/>
-              </linearGradient>
-            </defs>
-            <path d="M70 250 C70 220 92 211 126 209 L214 206 C242 150 280 124 348 120 L486 120
-                     C560 122 602 150 632 200 L724 212 C752 217 766 230 766 252 L766 258
-                     C766 272 754 280 736 280 L104 280 C84 280 70 268 70 254 Z"
-                  fill="url(#gloss-body)"/>
-            <!-- specular highlight along the shoulder -->
-            <path d="M150 214 C260 196 520 196 690 220 C520 206 270 206 150 224 Z"
-                  fill="#ffffff" opacity="0.75"/>
-            <path d="M306 150 L470 148 C512 150 536 168 556 198 L322 200 C310 178 306 164 306 150 Z"
-                  fill="url(#gloss-glass)"/>
-            <path d="M320 158 L452 156 C470 158 484 168 496 182 L330 184 C322 174 320 166 320 158 Z"
-                  fill="#ffffff" opacity="0.35"/>
-            <circle cx="236" cy="282" r="46" fill="#1d1d1f"/><circle cx="236" cy="282" r="20" fill="#52525a"/>
-            <circle cx="610" cy="282" r="46" fill="#1d1d1f"/><circle cx="610" cy="282" r="20" fill="#52525a"/>
-          </svg>
-        </div>
-
-        <div class="squeegee" id="squeegee"></div>
-        <div class="gloss" id="gloss"></div>
-        <div class="beads" id="beads"></div>
-      </div>
-
-      <div class="install-progress"><span id="installBar"></span></div>
-    </div>
+  <div class="scrub-foot">
+    <span class="scrub-layer"><span class="ld"></span><span id="layerName">Top coat</span></span>
+    <p class="scrub-sub" id="capDesc">A hydrophobic elastomeric top layer — water sheets straight off, dirt and chemicals can't bond, and the gloss stays deep.</p>
+    <div class="scrub-dots" id="scrubDots"><i class="on"></i><i></i><i></i><i></i></div>
   </div>
 </section>
 
+<!-- Products (no pricing before login) -->
 <section class="container" style="padding:var(--s24) 0 var(--s16)">
   <div class="page-head row between">
     <h2 class="reveal">The protection range</h2>
     <a href="{{ url_for('products') }}" class="link-arrow reveal">All products ›</a>
   </div>
   <div class="grid g3">
-    {% for p in products[:3] %}
-    <div class="card lift product reveal">
+    {% for p in products %}
+    <a href="{{ url_for('products') }}" class="card lift product reveal" style="color:inherit">
+      <div class="product-media">
+        <img src="{{ url_for('static', filename=prod_img(p)) }}" alt="{{ p['name'] }}">
+      </div>
       <span class="cat">{{ p['category'] }}</span>
       <h3>{{ p['name'] }}</h3>
       <p class="desc">{{ p['tagline'] }}</p>
-      <div class="price">{{ p['price']|inr }} <small>from</small></div>
       <div class="wtag">{{ p['warranty_years'] }}-year warranty</div>
-    </div>
+    </a>
     {% endfor %}
   </div>
 
@@ -99,67 +55,111 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
 (function(){
-  var protectedEl = document.getElementById('carProtected');
-  var squeegee = document.getElementById('squeegee');
-  var gloss = document.getElementById('gloss');
-  var beads = document.getElementById('beads');
-  var step = document.getElementById('installStep');
-  var bar = document.getElementById('installBar');
-  if(!protectedEl) return;
+  var canvas = document.getElementById('scrubCanvas');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var FRAMES = 150;
+  var isMobile = window.matchMedia('(max-width: 768px)').matches;
+  var staticBase = "{{ url_for('static', filename='x') }}".replace(/x$/, '');
+  var base = staticBase + (isMobile ? 'scrub-m/' : 'scrub/');
+  var pad = function(n){ n=''+n; while(n.length<3) n='0'+n; return n; };
 
-  // scatter water beads once
-  (function(){
-    var html = '';
-    for(var i=0;i<26;i++){
-      var size = 4 + Math.random()*9;
-      var x = 14 + Math.random()*64;          // keep over the body
-      var y = 36 + Math.random()*30;
-      html += '<i style="left:'+x+'%;top:'+y+'%;width:'+size+'px;height:'+size+'px"></i>';
-    }
-    beads.innerHTML = html;
-  })();
+  var imgs = new Array(FRAMES), curFrame = 0;
+  function coverDraw(im){
+    var cw=canvas.width, ch=canvas.height, iw=im.naturalWidth, ih=im.naturalHeight;
+    if(!cw||!ch||!iw) return;
+    var s=Math.max(cw/iw, ch/ih), w=iw*s, h=ih*s;
+    ctx.drawImage(im, (cw-w)/2, (ch-h)/2, w, h);
+  }
+  function draw(idx){
+    idx = Math.max(0, Math.min(FRAMES-1, Math.round(idx))); curFrame = idx;
+    var im = imgs[idx];
+    if(im && im.complete && im.naturalWidth){ coverDraw(im); }
+  }
+  function sizeCanvas(){
+    var dpr = Math.min(window.devicePixelRatio||1, 2);
+    canvas.width = Math.round(canvas.clientWidth * dpr);
+    canvas.height = Math.round(canvas.clientHeight * dpr);
+    draw(curFrame);
+  }
+  for(var i=0;i<FRAMES;i++){
+    var im = new Image();
+    (function(idx){ im.onload = function(){ if(idx===curFrame){ draw(idx); } }; })(i);
+    im.src = base + 'f_' + pad(i+1) + '.jpg';
+    imgs[i] = im;
+  }
+  window.addEventListener('resize', sizeCanvas);
+  setTimeout(sizeCanvas, 60);
 
-  var clamp = function(x){ return Math.max(0, Math.min(1, x)); };
-  var map = function(x,a,b){ return clamp((x-a)/(b-a)); };
+  var caps = [
+    {name:'01 · Top coat',
+     d:'A hydrophobic elastomeric top layer — water sheets straight off, dirt and chemicals can\u2019t bond, and the gloss stays deep.',
+     specs:[{v:110,p:'',s:'\u00b0',l:'Water contact angle',x:22,y:38},
+            {v:95, p:'',s:' GU',l:'Gloss units',x:73,y:34},
+            {v:17, p:'',s:' \u00b5m',l:'Top-coat thickness',x:50,y:68}]},
+    {name:'02 · Aliphatic TPU',
+     d:'The core is aliphatic thermoplastic polyurethane — optically clear, elastic, and engineered never to yellow under UV.',
+     specs:[{v:190,p:'',s:' \u00b5m',l:'Film thickness',x:26,y:66},
+            {v:460,p:'',s:'%',l:'Elongation',x:70,y:40},
+            {v:99, p:'',s:'%',l:'Optical clarity',x:46,y:32}]},
+    {name:'03 · Clear adhesive',
+     d:'A water-clear acrylic adhesive flows into the paint, conforming to every curve and lifting away cleanly when removed.',
+     specs:[{v:40, p:'',s:' \u00b5m',l:'Adhesive layer',x:22,y:44},
+            {v:99, p:'',s:'%',l:'Light transmission',x:66,y:66},
+            {v:100,p:'',s:'%',l:'Clean removal',x:76,y:36}]},
+    {name:'04 · Self-healing',
+     d:'Swirls and fine scratches disappear on their own — the top coat re-flows with ambient warmth, no hot water needed.',
+     specs:[{v:30, p:'<',s:' s',l:'Self-heal time',x:30,y:40},
+            {v:40, p:'',s:'\u00b0C',l:'Activation temp',x:68,y:62},
+            {v:10, p:'',s:' yr',l:'Warranty',x:46,y:72}]}
+  ];
 
-  function render(p){
-    var rev = map(p, 0.12, 0.62);                       // film application phase
-    protectedEl.style.clipPath = 'inset(0 ' + ((1-rev)*100).toFixed(2) + '% 0 0)';
+  var layerName=document.getElementById('layerName'), capDesc=document.getElementById('capDesc'),
+      dots=document.getElementById('scrubDots').children,
+      cos=[document.getElementById('co0'),document.getElementById('co1'),document.getElementById('co2')];
 
-    var sqOn = p > 0.08 && p < 0.66;
-    squeegee.style.opacity = sqOn ? 1 : 0;
-    squeegee.style.left = (rev*100).toFixed(2) + '%';
-
-    var gl = map(p, 0.62, 0.86);                         // gloss sweep
-    gloss.style.opacity = (gl > 0.01 && gl < 0.99) ? 1 : 0;
-    gloss.style.transform = 'translateX(' + (-40 + gl*230).toFixed(1) + '%) skewX(-18deg)';
-
-    beads.style.opacity = map(p, 0.82, 1);               // water beads
-
-    var s = p < 0.12 ? 'Surface prep'
-          : p < 0.62 ? 'Film application'
-          : p < 0.86 ? 'Squeegee & set'
-          : 'Protected';
-    if(step.textContent !== s) step.textContent = s;
-
-    bar.style.transform = 'scaleX(' + p.toFixed(3) + ')';
+  function animateNumber(el, to, prefix, suffix){
+    var from = parseFloat(el.getAttribute('data-v')||'0'); var start=null, dur=650;
+    function step(ts){ if(!start)start=ts; var p=Math.min(1,(ts-start)/dur); var e=1-Math.pow(1-p,3);
+      el.textContent = prefix + Math.round(from+(to-from)*e) + suffix; if(p<1) requestAnimationFrame(step); else el.setAttribute('data-v', to); }
+    requestAnimationFrame(step);
   }
 
+  var curStage=-1, token=0;
+  function stageFor(p){ return p<0.30?0 : p<0.58?1 : p<0.78?2 : 3; }
+  function setStage(s){
+    if(s===curStage) return; curStage=s; token++;
+    var my=token, c=caps[s];
+    layerName.textContent=c.name; capDesc.textContent=c.d;
+    for(var k=0;k<dots.length;k++){ dots[k].className=(k===s?'on':''); }
+    cos.forEach(function(co,i){
+      co.classList.remove('show');
+      setTimeout(function(){
+        if(my!==token) return;
+        var sp=c.specs[i];
+        var x=sp.x, y=sp.y;
+        if(isMobile){ x = Math.max(30, Math.min(70, sp.x)); y = 32 + i*16; }  // stack within view
+        co.style.left=x+'%'; co.style.top=y+'%';
+        co.querySelector('.co-l').textContent=sp.l;
+        animateNumber(co.querySelector('.co-v'), sp.v, sp.p, sp.s);
+        co.classList.add('show');
+      }, 130 + i*95);
+    });
+  }
+  function render(p){ draw(p*(FRAMES-1)); setStage(stageFor(p)); }
+
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(reduce || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined'){
-    render(1);                                           // static protected state
+  if(reduce || typeof gsap==='undefined' || typeof ScrollTrigger==='undefined'){
+    var done=false;
+    imgs[FRAMES-1].addEventListener('load', function(){ sizeCanvas(); render(1); done=true; });
+    setTimeout(function(){ if(!done){ sizeCanvas(); render(1);} }, 1200);
     return;
   }
   gsap.registerPlugin(ScrollTrigger);
-  render(0);
+  setStage(0);
   ScrollTrigger.create({
-    trigger: '.install',
-    start: 'top top',
-    end: '+=2400',
-    pin: true,
-    scrub: 1,
-    invalidateOnRefresh: true,
-    onUpdate: function(self){ render(self.progress); }
+    trigger:'.scrub', start:'top top', end:'+=3200', pin:true, scrub:1,
+    invalidateOnRefresh:true, onUpdate:function(self){ render(self.progress); }
   });
   if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ ScrollTrigger.refresh(); }); }
 })();
